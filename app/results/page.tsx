@@ -2,9 +2,7 @@ import FlightResults from "@/components/ui/flight-results";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
-export default function ResultsPage({
-  searchParams,
-}: {
+export default function ResultsPage({}: {
   searchParams: { departure: string; destination: string; date: string };
 }) {
   return (
@@ -15,7 +13,7 @@ export default function ResultsPage({
         </div>
       }
     >
-      <FlightResults searchParams={searchParams} />
+      <FlightResults />
     </Suspense>
   );
 }
