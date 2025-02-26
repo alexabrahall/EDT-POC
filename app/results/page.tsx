@@ -2,9 +2,7 @@ import FlightResults from "@/components/ui/flight-results";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
-export default function ResultsPage({}: {
-  searchParams: { departure: string; destination: string; date: string };
-}) {
+export default function ResultsPage() {
   return (
     <Suspense
       fallback={
