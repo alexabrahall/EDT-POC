@@ -1,10 +1,11 @@
 "use client";
-import { Check, ChevronsUpDown, Plane } from "lucide-react";
+import { Check, ChevronsUpDown, Plane, CalendarIcon } from "lucide-react";
 import type React from "react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Command, 
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -20,6 +21,16 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CustomDropdowns } from "./custom-dropdowns";
 
 // Sample airports data - in a real app, this would come from an API
 const airports = [
@@ -29,13 +40,21 @@ const airports = [
   { value: "dxb", label: "Dubai International (DXB)", country: "UAE" },
 ];
 
-const countries = [
-  { value: "fr", label: "France", flag: "🇫🇷" },
-  { value: "de", label: "Germany", flag: "🇩🇪" },
-  { value: "it", label: "Italy", flag: "🇮🇹" },
-  { value: "es", label: "Spain", flag: "🇪🇸" },
-  { value: "pt", label: "Portugal", flag: "🇵🇹" },
+const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
+
 
 export default function FlightSearch() {
   const router = useRouter();
@@ -45,13 +64,28 @@ export default function FlightSearch() {
   const [destination, setDestination] = useState("");
   const [date, setDate] = useState<Date>();
   const [isLoading, setIsLoading] = useState(false);
+  const [isMonthSelection, setIsMonthSelection] = useState(false);
+  const [weekendOnly, setWeekendOnly] = useState(false);
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [month, setMonth] = useState<Date>(new Date());
+
+  // Create a Date object for tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+
+  // Function to disable dates before tomorrow
+  const disablePastDates = (date: Date) => {
+    return date < tomorrow;
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     // Validate form
-    if (!departure || !destination || !date) {
+    if (!departure || !date) {
       alert("Please fill in all fields");
       setIsLoading(false);
       return;
@@ -62,6 +96,10 @@ export default function FlightSearch() {
       departure,
       destination,
       date: date.toISOString(),
+      weekendOnly: weekendOnly.toString(),
+      adults: adults.toString(),
+      children: children.toString(),
+      isMonthSelection: isMonthSelection.toString(),
     });
 
     // Navigate to results page
@@ -156,57 +194,6 @@ export default function FlightSearch() {
                 </PopoverContent>
               </Popover>
 
-              <Popover open={destinationOpen} onOpenChange={setDestinationOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={destinationOpen}
-                    className="justify-between"
-                  >
-                    {destination
-                      ? countries.find(
-                          (country) => country.value === destination
-                        )?.label
-                      : "Destination Country..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search countries..." />
-                    <CommandList>
-                      <CommandEmpty>No country found.</CommandEmpty>
-                      <CommandGroup>
-                        {countries.map((country) => (
-                          <CommandItem
-                            key={country.value}
-                            value={country.value}
-                            onSelect={(currentValue) => {
-                              setDestination(
-                                currentValue === destination ? "" : currentValue
-                              );
-                              setDestinationOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                destination === country.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            <span className="mr-2">{country.flag}</span>
-                            {country.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -216,16 +203,157 @@ export default function FlightSearch() {
                       !date && "text-muted-foreground"
                     )}
                   >
-                    {date ? format(date, "PPP") : "Pick a date"}
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-4 w-4" />
+                      {date
+                        ? isMonthSelection
+                          ? format(date, "MMMM yyyy")
+                          : format(date, "PPP")
+                        : "Pick a date"}
+                    </div>
+                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                  />
+                  <div className="p-3 border-b">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium">Date Selection</div>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="weekend-only"
+                            checked={weekendOnly}
+                            onCheckedChange={(checked) => {
+                              setWeekendOnly(checked === true);
+                            }}
+                          />
+                          <Label htmlFor="weekend-only" className="text-sm">
+                            Weekend only
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 p-3 border-b">
+                    <div>
+                      <Label htmlFor="adults" className="text-sm font-medium">
+                        Adults
+                      </Label>
+                      <Select
+                        value={adults.toString()}
+                        onValueChange={(value) =>
+                          setAdults(Number.parseInt(value))
+                        }
+                      >
+                        <SelectTrigger id="adults" className="mt-1">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 4, 5, 6].map((num) => (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="children" className="text-sm font-medium">
+                        Children
+                      </Label>
+                      <Select
+                        value={children.toString()}
+                        onValueChange={(value) =>
+                          setChildren(Number.parseInt(value))
+                        }
+                      >
+                        <SelectTrigger id="children" className="mt-1">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[0, 1, 2, 3, 4].map((num) => (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="p-3 border-b">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Select by:</Label>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "text-xs",
+                            !isMonthSelection &&
+                              "bg-primary text-primary-foreground"
+                          )}
+                          onClick={() => setIsMonthSelection(false)}
+                          type="button"
+                        >
+                          Day
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "text-xs",
+                            isMonthSelection &&
+                              "bg-primary text-primary-foreground"
+                          )}
+                          onClick={() => setIsMonthSelection(true)}
+                          type="button"
+                        >
+                          Month
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {isMonthSelection ? (
+                    <div className={cn("p-3")}>
+                      <div className="space-y-4">
+                        <CustomDropdowns
+                          currMonth={month}
+                          setCurrMonth={setMonth}
+                        />
+
+                        <div className="grid grid-cols-1 gap-2">
+                          <button
+                            onClick={() => {
+                              // if (props.onSelect) {
+                              //   const firstDay = new Date(
+                              //     month.getFullYear(),
+                              //     month.getMonth(),
+                              //     1
+                              //   );
+                              //   props.onSelect(firstDay);
+                              // }
+                            }}
+                            className={cn(
+                              buttonVariants({ variant: "outline" }),
+                              "justify-start text-left font-normal",
+                              "hover:bg-primary hover:text-primary-foreground"
+                            )}
+                          >
+                            {format(month, "MMMM yyyy")}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Calendar
+                      mode={"single"}
+                      selected={date}
+                      onSelect={setDate}
+                      initialFocus
+                      disabled={disablePastDates}
+                    />
+                  )}
                 </PopoverContent>
               </Popover>
             </div>

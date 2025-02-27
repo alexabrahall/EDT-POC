@@ -27,6 +27,7 @@ const flights = [
     direct: true,
     airlineCode: "SW",
     flightNumber: "SW123",
+    destination: "Paris, France",
   },
   {
     id: 2,
@@ -38,52 +39,103 @@ const flights = [
     direct: true,
     airlineCode: "AC",
     flightNumber: "AC456",
+    destination: "Berlin, Germany",
   },
   {
     id: 3,
     airline: "JetSpeed",
-    departureTime: "08:30",
-    arrivalTime: "11:45",
-    duration: "3h 15m",
-    price: 75,
-    direct: false,
-    stops: ["Paris"],
+    departureTime: "09:00",
+    arrivalTime: "11:30",
+    duration: "2h 30m",
+    price: 98,
+    direct: true,
     airlineCode: "JS",
-    flightNumber: "JS789",
+    flightNumber: "JS321",
+    destination: "Rome, Italy",
   },
   {
     id: 4,
-    airline: "SkyWings",
-    departureTime: "10:00",
-    arrivalTime: "12:15",
+    airline: "FlyFast",
+    departureTime: "10:45",
+    arrivalTime: "13:00",
     duration: "2h 15m",
-    price: 95,
+    price: 120,
     direct: true,
-    airlineCode: "SW",
-    flightNumber: "SW456",
+    airlineCode: "FF",
+    flightNumber: "FF654",
+    destination: "Madrid, Spain",
   },
   {
     id: 5,
-    airline: "AirConnect",
-    departureTime: "11:30",
-    arrivalTime: "14:15",
-    duration: "2h 45m",
-    price: 82,
-    direct: false,
-    stops: ["Amsterdam"],
-    airlineCode: "AC",
-    flightNumber: "AC789",
+    airline: "SkyWings",
+    departureTime: "12:30",
+    arrivalTime: "15:00",
+    duration: "2h 30m",
+    price: 105,
+    direct: true,
+    airlineCode: "SW",
+    flightNumber: "SW789",
+    destination: "Amsterdam, Netherlands",
   },
   {
     id: 6,
+    airline: "AirConnect",
+    departureTime: "14:00",
+    arrivalTime: "16:45",
+    duration: "2h 45m",
+    price: 95,
+    direct: true,
+    airlineCode: "AC",
+    flightNumber: "AC987",
+    destination: "Vienna, Austria",
+  },
+  {
+    id: 7,
     airline: "JetSpeed",
-    departureTime: "13:00",
-    arrivalTime: "15:30",
+    departureTime: "15:30",
+    arrivalTime: "18:00",
     duration: "2h 30m",
-    price: 135,
+    price: 110,
     direct: true,
     airlineCode: "JS",
-    flightNumber: "JS456",
+    flightNumber: "JS852",
+    destination: "Lisbon, Portugal",
+  },
+  {
+    id: 8,
+    airline: "FlyFast",
+    departureTime: "17:00",
+    arrivalTime: "19:30",
+    duration: "2h 30m",
+    price: 130,
+    direct: true,
+    airlineCode: "FF",
+    flightNumber: "FF753",
+    destination: "Copenhagen, Denmark",
+  },
+  {
+    id: 9,
+    airline: "SkyWings",
+    departureTime: "18:45",
+    arrivalTime: "21:15",
+    duration: "2h 30m",
+    price: 85,
+    direct: true,
+    airlineCode: "SW",
+    flightNumber: "SW159",
+    destination: "Brussels, Belgium",
+  },
+  {
+    id: 10,
+    airline: "AirConnect",
+    departureTime: "20:00",
+    arrivalTime: "22:30",
+    duration: "2h 30m",
+    price: 140,
+    direct: true,
+    airlineCode: "AC",
+    flightNumber: "AC753",
+    destination: "Stockholm, Sweden",
   },
 ];
 
@@ -142,7 +194,7 @@ export default function FlightResults() {
                         step={10}
                       />
                       <div className="text-sm text-muted-foreground">
-                        Up to ${maxPrice}
+                        Up to £{maxPrice}
                       </div>
                     </div>
                   </div>
@@ -198,6 +250,30 @@ export default function FlightResults() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="font-semibold mb-4">Destinations</h2>
+                <div className="space-y-2">
+                  {Array.from(new Set(flights.map((f) => f.destination))).map(
+                    (airline) => (
+                      <div
+                        key={airline}
+                        className="flex items-center space-x-2"
+                      >
+                        <input
+                          type="checkbox"
+                          id={airline}
+                          className="rounded border-gray-300"
+                          defaultChecked
+                        />
+                        <Label htmlFor={airline}>{airline}</Label>
+                      </div>
+                    )
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="space-y-4">
@@ -207,9 +283,11 @@ export default function FlightResults() {
                   <div className="grid gap-6 md:grid-cols-[1fr,auto]">
                     <div className="space-y-4">
                       <div className="flex items-center space-x-4">
-                        <div className="font-semibold">{flight.airline}</div>
+                        <div className="font-semibold">
+                          {flight.destination}
+                        </div>
                         <div className="text-sm text-muted-foreground">
-                          {flight.airlineCode} {flight.flightNumber}
+                          {flight.airline} {flight.flightNumber}
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
@@ -230,11 +308,6 @@ export default function FlightResults() {
                             <Plane className="h-4 w-4 mx-2 rotate-90" />
                             <div className="h-[2px] flex-1 bg-border" />
                           </div>
-                          {!flight.direct && (
-                            <div className="text-sm text-muted-foreground mt-2">
-                              1 stop ({flight.stops?.[0]})
-                            </div>
-                          )}
                         </div>
                         <div className="grid text-center">
                           <span className="font-semibold">
@@ -247,7 +320,7 @@ export default function FlightResults() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end justify-between">
-                      <div className="text-2xl font-bold">${flight.price}</div>
+                      <div className="text-2xl font-bold">£{flight.price}</div>
                       <Button className="min-w-[140px]">
                         Select <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
