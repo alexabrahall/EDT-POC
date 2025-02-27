@@ -40,26 +40,12 @@ const airports = [
   { value: "dxb", label: "Dubai International (DXB)", country: "UAE" },
 ];
 
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+
 
 
 export default function FlightSearch() {
   const router = useRouter();
   const [departureOpen, setDepartureOpen] = useState(false);
-  const [destinationOpen, setDestinationOpen] = useState(false);
   const [departure, setDeparture] = useState("");
   const [destination, setDestination] = useState("");
   const [date, setDate] = useState<Date>();
