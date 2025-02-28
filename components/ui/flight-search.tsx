@@ -40,9 +40,6 @@ const airports = [
   { value: "dxb", label: "Dubai International (DXB)", country: "UAE" },
 ];
 
-
-
-
 export default function FlightSearch() {
   const router = useRouter();
   const [departureOpen, setDepartureOpen] = useState(false);
@@ -55,6 +52,7 @@ export default function FlightSearch() {
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [month, setMonth] = useState<Date>(new Date());
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
   // Create a Date object for tomorrow
   const tomorrow = new Date();
@@ -180,7 +178,7 @@ export default function FlightSearch() {
                 </PopoverContent>
               </Popover>
 
-              <Popover>
+              <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -220,52 +218,7 @@ export default function FlightSearch() {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 p-3 border-b">
-                    <div>
-                      <Label htmlFor="adults" className="text-sm font-medium">
-                        Adults
-                      </Label>
-                      <Select
-                        value={adults.toString()}
-                        onValueChange={(value) =>
-                          setAdults(Number.parseInt(value))
-                        }
-                      >
-                        <SelectTrigger id="adults" className="mt-1">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[1, 2, 3, 4, 5, 6].map((num) => (
-                            <SelectItem key={num} value={num.toString()}>
-                              {num}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="children" className="text-sm font-medium">
-                        Children
-                      </Label>
-                      <Select
-                        value={children.toString()}
-                        onValueChange={(value) =>
-                          setChildren(Number.parseInt(value))
-                        }
-                      >
-                        <SelectTrigger id="children" className="mt-1">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[0, 1, 2, 3, 4].map((num) => (
-                            <SelectItem key={num} value={num.toString()}>
-                              {num}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+
                   <div className="p-3 border-b">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-medium">Select by:</Label>
@@ -305,20 +258,28 @@ export default function FlightSearch() {
                       <div className="space-y-4">
                         <CustomDropdowns
                           currMonth={month}
-                          setCurrMonth={setMonth}
+                          setCurrMonth={(newMonth) => {
+                            const firstDay = new Date(
+                              newMonth.getFullYear(),
+                              newMonth.getMonth(),
+                              1
+                            );
+                            setDate(firstDay);
+                            setMonth(newMonth);
+                            setDatePopoverOpen(false);
+                          }}
                         />
 
                         <div className="grid grid-cols-1 gap-2">
-                          <button
+                          {/* <button
                             onClick={() => {
-                              // if (props.onSelect) {
-                              //   const firstDay = new Date(
-                              //     month.getFullYear(),
-                              //     month.getMonth(),
-                              //     1
-                              //   );
-                              //   props.onSelect(firstDay);
-                              // }
+                              const firstDay = new Date(
+                                month.getFullYear(),
+                                month.getMonth(),
+                                1
+                              );
+                              setDate(firstDay);
+                              setDatePopoverOpen(false);
                             }}
                             className={cn(
                               buttonVariants({ variant: "outline" }),
@@ -327,21 +288,66 @@ export default function FlightSearch() {
                             )}
                           >
                             {format(month, "MMMM yyyy")}
-                          </button>
+                          </button> */}
                         </div>
                       </div>
                     </div>
                   ) : (
                     <Calendar
-                      mode={"single"}
+                      mode="single"
                       selected={date}
-                      onSelect={setDate}
+                      onSelect={(newDate) => {
+                        setDate(newDate);
+                        setDatePopoverOpen(false);
+                      }}
                       initialFocus
                       disabled={disablePastDates}
                     />
                   )}
                 </PopoverContent>
               </Popover>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="adults" className="text-sm font-medium">
+                  Adults
+                </Label>
+                <Select
+                  value={adults.toString()}
+                  onValueChange={(value) => setAdults(Number.parseInt(value))}
+                >
+                  <SelectTrigger id="adults">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6].map((num) => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="children" className="text-sm font-medium">
+                  Children
+                </Label>
+                <Select
+                  value={children.toString()}
+                  onValueChange={(value) => setChildren(Number.parseInt(value))}
+                >
+                  <SelectTrigger id="children">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[0, 1, 2, 3, 4].map((num) => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <Button
