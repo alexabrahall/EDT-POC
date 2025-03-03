@@ -139,7 +139,7 @@ export default function FlightSearch() {
                   >
                     {departure
                       ? airports.find((airport) => airport.value === departure)
-                          ?.label
+                        ?.label
                       : "Departure Airport..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -200,23 +200,15 @@ export default function FlightSearch() {
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
                   <div className="p-3 border-b">
+
                     <div className="flex items-center justify-between">
                       <div className="text-sm font-medium">Date Selection</div>
                       <div className="flex items-center space-x-2">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id="weekend-only"
-                            checked={weekendOnly}
-                            onCheckedChange={(checked) => {
-                              setWeekendOnly(checked === true);
-                            }}
-                          />
-                          <Label htmlFor="weekend-only" className="text-sm">
-                            Weekend only
-                          </Label>
-                        </div>
+
                       </div>
+
                     </div>
+
                   </div>
 
                   <div className="p-3 border-b">
@@ -229,7 +221,7 @@ export default function FlightSearch() {
                           className={cn(
                             "text-xs",
                             !isMonthSelection &&
-                              "bg-primary text-primary-foreground"
+                            "bg-primary text-primary-foreground"
                           )}
                           onClick={() => setIsMonthSelection(false)}
                           type="button"
@@ -242,7 +234,7 @@ export default function FlightSearch() {
                           className={cn(
                             "text-xs",
                             isMonthSelection &&
-                              "bg-primary text-primary-foreground"
+                            "bg-primary text-primary-foreground"
                           )}
                           onClick={() => setIsMonthSelection(true)}
                           type="button"
@@ -254,8 +246,8 @@ export default function FlightSearch() {
                   </div>
 
                   {isMonthSelection ? (
-                    <div className={cn("p-3")}>
-                      <div className="space-y-4">
+                    <div className={cn("p-2")}>
+                      <div className="">
                         <CustomDropdowns
                           currMonth={month}
                           setCurrMonth={(newMonth) => {
@@ -266,29 +258,53 @@ export default function FlightSearch() {
                             );
                             setDate(firstDay);
                             setMonth(newMonth);
-                            setDatePopoverOpen(false);
+                            // setDatePopoverOpen(false);
                           }}
                         />
 
-                        <div className="grid grid-cols-1 gap-2">
-                          {/* <button
-                            onClick={() => {
-                              const firstDay = new Date(
-                                month.getFullYear(),
-                                month.getMonth(),
-                                1
-                              );
-                              setDate(firstDay);
-                              setDatePopoverOpen(false);
-                            }}
-                            className={cn(
-                              buttonVariants({ variant: "outline" }),
-                              "justify-start text-left font-normal",
-                              "hover:bg-primary hover:text-primary-foreground"
-                            )}
+                        <div className="flex flex-col p-3">
+                          {isMonthSelection && (
+                            <div className="flex items-center space-x-2 rounded-md p-2 hover:bg-muted/50">
+                              <Checkbox
+                                id="weekend-only"
+                                checked={weekendOnly}
+                                onCheckedChange={(checked) => {
+                                  setWeekendOnly(checked === true);
+                                }}
+                              />
+                              <Label
+                                htmlFor="weekend-only"
+                                className="text-sm font-medium cursor-pointer"
+                              >
+                                Weekend only
+                              </Label>
+                            </div>
+                          )}
+
+                          <Button
+                            onClick={() => setDatePopoverOpen(false)}
+                            className="w-full"
                           >
-                            {format(month, "MMMM yyyy")}
-                          </button> */}
+                            Ok
+                          </Button>
+
+                          {/* If you want to uncomment and use this button, here's an improved version:
+  <Button
+    variant="outline"
+    onClick={() => {
+      const firstDay = new Date(
+        month.getFullYear(),
+        month.getMonth(),
+        1
+      );
+      setDate(firstDay);
+      setDatePopoverOpen(false);
+    }}
+    className="w-full justify-start text-left font-normal"
+  >
+    {format(month, "MMMM yyyy")}
+  </Button>
+  */}
                         </div>
                       </div>
                     </div>
