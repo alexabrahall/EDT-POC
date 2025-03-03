@@ -45,12 +45,12 @@ export default function FlightSearch() {
   const [departureOpen, setDepartureOpen] = useState(false);
   const [departure, setDeparture] = useState("");
   const [destination, setDestination] = useState("");
-  const [date, setDate] = useState<Date>();
+  const [date, setDate] = useState<Date | null>(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [isMonthSelection, setIsMonthSelection] = useState(false);
   const [weekendOnly, setWeekendOnly] = useState(false);
   const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
+  const [children, setChildren] = useState(1);
   const [month, setMonth] = useState<Date>(new Date());
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
@@ -63,6 +63,18 @@ export default function FlightSearch() {
   const disablePastDates = (date: Date) => {
     return date < tomorrow;
   };
+
+  const options = [
+    { value: "zero", label: "0", numeric: 0 },
+    { value: "one", label: "1", numeric: 1 },
+    { value: "two", label: "2", numeric: 2 },
+    { value: "three", label: "3", numeric: 3 },
+    { value: "four", label: "4", numeric: 4 },
+  ];
+
+  // Find the current option based on children value
+  const currentOption =
+    options.find((opt) => opt.numeric === children) || options[0];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +151,7 @@ export default function FlightSearch() {
                   >
                     {departure
                       ? airports.find((airport) => airport.value === departure)
-                        ?.label
+                          ?.label
                       : "Departure Airport..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -190,26 +202,19 @@ export default function FlightSearch() {
                     <div className="flex items-center gap-2">
                       <CalendarIcon className="h-4 w-4" />
                       {date
-                        ? isMonthSelection
-                          ? format(date, "MMMM yyyy")
-                          : format(date, "PPP")
+                        ? (isMonthSelection
+                            ? format(date, "MMMM yyyy")
+                            : format(date, "PPP")) +
+                          (weekendOnly && isMonthSelection
+                            ? " (Weekend Only)"
+                            : "")
                         : "Pick a date"}
                     </div>
                     <ChevronsUpDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
-                  <div className="p-3 border-b">
-
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm font-medium">Date Selection</div>
-                      <div className="flex items-center space-x-2">
-
-                      </div>
-
-                    </div>
-
-                  </div>
+                  <div className="p-3 border-b"></div>
 
                   <div className="p-3 border-b">
                     <div className="flex items-center justify-between">
@@ -221,7 +226,7 @@ export default function FlightSearch() {
                           className={cn(
                             "text-xs",
                             !isMonthSelection &&
-                            "bg-primary text-primary-foreground"
+                              "bg-primary text-primary-foreground"
                           )}
                           onClick={() => setIsMonthSelection(false)}
                           type="button"
@@ -234,7 +239,7 @@ export default function FlightSearch() {
                           className={cn(
                             "text-xs",
                             isMonthSelection &&
-                            "bg-primary text-primary-foreground"
+                              "bg-primary text-primary-foreground"
                           )}
                           onClick={() => setIsMonthSelection(true)}
                           type="button"
@@ -280,31 +285,6 @@ export default function FlightSearch() {
                               </Label>
                             </div>
                           )}
-
-                          <Button
-                            onClick={() => setDatePopoverOpen(false)}
-                            className="w-full"
-                          >
-                            Ok
-                          </Button>
-
-                          {/* If you want to uncomment and use this button, here's an improved version:
-  <Button
-    variant="outline"
-    onClick={() => {
-      const firstDay = new Date(
-        month.getFullYear(),
-        month.getMonth(),
-        1
-      );
-      setDate(firstDay);
-      setDatePopoverOpen(false);
-    }}
-    className="w-full justify-start text-left font-normal"
-  >
-    {format(month, "MMMM yyyy")}
-  </Button>
-  */}
                         </div>
                       </div>
                     </div>
@@ -314,16 +294,23 @@ export default function FlightSearch() {
                       selected={date}
                       onSelect={(newDate) => {
                         setDate(newDate);
-                        setDatePopoverOpen(false);
+                        // setDatePopoverOpen(false);
                       }}
                       initialFocus
                       disabled={disablePastDates}
                     />
                   )}
+
+                  <Button
+                    onClick={() => setDatePopoverOpen(false)}
+                    className="w-full  text-center font-normal mx-auto"
+                  >
+                    Ok
+                  </Button>
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="adults" className="text-sm font-medium">
                   Adults
@@ -349,16 +336,19 @@ export default function FlightSearch() {
                   Children
                 </Label>
                 <Select
-                  value={children.toString()}
-                  onValueChange={(value) => setChildren(Number.parseInt(value))}
+                  value={currentOption.value}
+                  onValueChange={(value) => {
+                    const option = options.find((opt) => opt.value === value);
+                    if (option) setChildren(option.numeric);
+                  }}
                 >
-                  <SelectTrigger id="children">
-                    <SelectValue placeholder="Select" />
+                  <SelectTrigger id="children" className="">
+                    <SelectValue placeholder="Select number" />
                   </SelectTrigger>
                   <SelectContent>
-                    {[0, 1, 2, 3, 4].map((num) => (
-                      <SelectItem key={num} value={num.toString()}>
-                        {num}
+                    {options.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

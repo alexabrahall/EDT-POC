@@ -12,7 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, CalendarIcon, ChevronDown, ChevronUp, Plane } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarIcon,
+  ChevronDown,
+  ChevronUp,
+  Plane,
+} from "lucide-react";
 import { useState } from "react";
 import {
   Collapsible,
@@ -20,6 +26,7 @@ import {
   CollapsibleTrigger,
 } from "./collapsible";
 import { useRouter } from "next/navigation";
+import { formatDate } from "../utils/utils";
 
 // Fake flight data
 const flights = [
@@ -337,9 +344,7 @@ export default function FlightResults() {
                 <Plane className="h-6 w-6" />
                 <span className="text-xl font-bold">DayTripper</span>
               </div>
-
             </div>
-
           </div>
         </div>
       </header>
@@ -402,8 +407,12 @@ export default function FlightResults() {
                     {/* Outbound Flight */}
                     <div className="flex items-center space-x-4">
                       <div className="grid text-center">
-                        <span className="font-semibold">{flight.departureTime}</span>
-                        <span className="text-sm text-muted-foreground">LHR</span>
+                        <span className="font-semibold">
+                          {flight.departureTime}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          LHR
+                        </span>
                       </div>
                       <div className="flex-1 flex flex-col items-center">
                         <div className="text-sm text-muted-foreground mb-2">
@@ -416,19 +425,27 @@ export default function FlightResults() {
                         </div>
                       </div>
                       <div className="grid text-center">
-                        <span className="font-semibold">{flight.arrivalTime}</span>
-                        <span className="text-sm text-muted-foreground">CDG</span>
+                        <span className="font-semibold">
+                          {flight.arrivalTime}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          CDG
+                        </span>
                       </div>
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-border my-2" />
+                    <div className="border-t border-border my-2 w-1/2 mx-auto" />
 
                     {/* Return Flight */}
                     <div className="flex items-center space-x-4">
                       <div className="grid text-center">
-                        <span className="font-semibold">{flight.returnDepartureTime}</span>
-                        <span className="text-sm text-muted-foreground">CDG</span>
+                        <span className="font-semibold">
+                          {flight.returnDepartureTime}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          CDG
+                        </span>
                       </div>
                       <div className="flex-1 flex flex-col items-center">
                         <div className="text-sm text-muted-foreground mb-2">
@@ -441,8 +458,12 @@ export default function FlightResults() {
                         </div>
                       </div>
                       <div className="grid text-center">
-                        <span className="font-semibold">{flight.returnArrivalTime}</span>
-                        <span className="text-sm text-muted-foreground">LHR</span>
+                        <span className="font-semibold">
+                          {flight.returnArrivalTime}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          LHR
+                        </span>
                       </div>
                     </div>
 
@@ -450,17 +471,16 @@ export default function FlightResults() {
                       <div className="flex items-center space-x-2 mb-2 sm:mb-0">
                         <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">
-                          {flight.outboundDate}
+                          {formatDate(new Date(flight.outboundDate))}
                         </span>
                       </div>
                       <div className="flex items-center space-x-4">
-
+                        <div className="text-sm font-bold sm:text-xl">
+                          From £{flight.totalPrice}
+                        </div>
                         <Button className="min-w-[140px]">
                           Select <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
-                        <div className="text-xl font-bold">
-                          From £{flight.totalPrice}
-                        </div>
                       </div>
                     </div>
                   </div>
