@@ -478,7 +478,12 @@ export default function FlightResults() {
                         <div className="text-sm font-bold sm:text-xl">
                           From £{flight.totalPrice}
                         </div>
-                        <Button className="min-w-[140px]">
+                        <Button
+                          className="min-w-[140px]"
+                          onClick={() => {
+                            router.push(`/details?flight=${flight.id}`);
+                          }}
+                        >
                           Select <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       </div>
