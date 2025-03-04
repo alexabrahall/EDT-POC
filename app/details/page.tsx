@@ -57,32 +57,15 @@ export default function FlightDetailsPage() {
               </li>
             </ul>
 
-            <div className="mt-6 border-t pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span>Add baggage</span>
-                  <span className="text-blue-500 ml-2">+£84</span>
-                </div>
-                <Switch checked={addBaggage} onCheckedChange={setAddBaggage} />
-              </div>
-            </div>
+            
 
-            <div className="mt-4 border-t pt-4">
-              <button className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <span>Additional baggage</span>
-                  <span className="text-blue-500 ml-2">+£85</span>
-                </div>
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
+            
           </div>
 
           {/* Outbound flight */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex justify-between mb-4">
               <h3 className="font-semibold">Bristol – Budapest</h3>
-              <span className="text-gray-500">2h30m</span>
             </div>
 
             <div className="flex items-center mb-4">
@@ -99,17 +82,14 @@ export default function FlightDetailsPage() {
                 <div className="font-semibold">Ryanair</div>
                 <div className="text-gray-500 text-sm">2h30m</div>
               </div>
-              <button className="ml-auto text-blue-500 text-sm">
-                Learn more
-              </button>
+              
             </div>
 
             <div className="relative pl-6 border-l-2 border-gray-200">
               <div className="absolute left-0 top-0 w-3 h-3 rounded-full bg-gray-400 -translate-x-[7px]"></div>
               <div className="mb-8">
                 <div className="font-semibold">5:55am</div>
-                <div className="text-sm text-gray-500">Wed, Mar 19</div>
-                <div className="text-sm">Bristol</div>
+                
                 <div className="text-sm text-gray-500">
                   Bristol Airport, BRS
                 </div>
@@ -118,8 +98,7 @@ export default function FlightDetailsPage() {
               <div className="absolute left-0 bottom-0 w-3 h-3 rounded-full bg-gray-400 -translate-x-[7px]"></div>
               <div>
                 <div className="font-semibold">9:25am</div>
-                <div className="text-sm text-gray-500">Wed, Mar 19</div>
-                <div className="text-sm">Budapest</div>
+               
                 <div className="text-sm text-gray-500">
                   Budapest Ferenc Liszt International Airport, BUD
                 </div>
@@ -131,7 +110,6 @@ export default function FlightDetailsPage() {
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex justify-between mb-4">
               <h3 className="font-semibold">Budapest – Bristol</h3>
-              <span className="text-gray-500">2h50m</span>
             </div>
 
             <div className="flex items-center mb-4">
@@ -148,17 +126,14 @@ export default function FlightDetailsPage() {
                 <div className="font-semibold">Ryanair</div>
                 <div className="text-gray-500 text-sm">2h50m</div>
               </div>
-              <button className="ml-auto text-blue-500 text-sm">
-                Learn more
-              </button>
+            
             </div>
 
             <div className="relative pl-6 border-l-2 border-gray-200">
               <div className="absolute left-0 top-0 w-3 h-3 rounded-full bg-gray-400 -translate-x-[7px]"></div>
               <div className="mb-8">
                 <div className="font-semibold">8:00pm</div>
-                <div className="text-sm text-gray-500">Fri, Mar 21</div>
-                <div className="text-sm">Budapest</div>
+                
                 <div className="text-sm text-gray-500">
                   Budapest Ferenc Liszt International Airport, BUD
                 </div>
@@ -167,8 +142,7 @@ export default function FlightDetailsPage() {
               <div className="absolute left-0 bottom-0 w-3 h-3 rounded-full bg-gray-400 -translate-x-[7px]"></div>
               <div>
                 <div className="font-semibold">9:50pm</div>
-                <div className="text-sm text-gray-500">Fri, Mar 21</div>
-                <div className="text-sm">Bristol</div>
+                
                 <div className="text-sm text-gray-500">
                   Bristol Airport, BRS
                 </div>
@@ -226,26 +200,9 @@ export default function FlightDetailsPage() {
           </div>
 
           {/* More deals */}
-          <button className="flex items-center justify-between w-full py-4">
-            <span className="font-semibold">3 more deals</span>
-            <ChevronRight className="h-5 w-5" />
-          </button>
+          
 
-          {/* Trust message */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg flex items-start">
-            <div className="mr-3 mt-1">
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <AlertCircle className="h-5 w-5" />
-              </div>
-            </div>
-            <div>
-              <p className="text-sm">
-                You can rely on all our sellers, but if you've got questions —
-                we've got your back
-              </p>
-            </div>
-            <Info className="h-5 w-5 ml-2 text-gray-400 mt-1" />
-          </div>
+          
 
           {/* Support message */}
           <div className="mt-6 text-center text-sm text-gray-500">
