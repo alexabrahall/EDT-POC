@@ -140,177 +140,188 @@ export default function FlightSearch() {
             onSubmit={handleSearch}
             className="grid gap-6 p-6 bg-white dark:bg-gray-800/50 rounded-xl shadow-lg backdrop-blur-sm"
           >
-            <div className="grid gap-6 md:grid-cols-[1fr,1fr,auto]">
-              <Popover open={departureOpen} onOpenChange={setDepartureOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={departureOpen}
-                    className="justify-between"
-                  >
-                    {departure
-                      ? airports.find((airport) => airport.value === departure)
-                          ?.label
-                      : "Departure Airport..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search airports..." />
-                    <CommandList>
-                      <CommandEmpty>No airport found.</CommandEmpty>
-                      <CommandGroup>
-                        {airports.map((airport) => (
-                          <CommandItem
-                            key={airport.value}
-                            value={airport.value}
-                            onSelect={(currentValue) => {
-                              setDeparture(
-                                currentValue === departure ? "" : currentValue
-                              );
-                              setDepartureOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                departure === airport.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {airport.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-
-              <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "justify-between text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-4 w-4" />
-                      {date
-                        ? (isMonthSelection
-                            ? format(date, "MMMM yyyy")
-                            : format(date, "PPP")) +
-                          (weekendOnly && isMonthSelection
-                            ? " (Weekend Only)"
-                            : "")
-                        : "Pick a date"}
-                    </div>
-                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <div className="p-3 border-b"></div>
-
-                  <div className="p-3 border-b">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">Select by:</Label>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "text-xs",
-                            !isMonthSelection &&
-                              "bg-primary text-primary-foreground"
-                          )}
-                          onClick={() => setIsMonthSelection(false)}
-                          type="button"
-                        >
-                          Day
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "text-xs",
-                            isMonthSelection &&
-                              "bg-primary text-primary-foreground"
-                          )}
-                          onClick={() => setIsMonthSelection(true)}
-                          type="button"
-                        >
-                          Month
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {isMonthSelection ? (
-                    <div className={cn("p-2")}>
-                      <div className="">
-                        <CustomDropdowns
-                          currMonth={month}
-                          setCurrMonth={(newMonth) => {
-                            const firstDay = new Date(
-                              newMonth.getFullYear(),
-                              newMonth.getMonth(),
-                              1
-                            );
-                            setDate(firstDay);
-                            setMonth(newMonth);
-                            // setDatePopoverOpen(false);
-                          }}
-                        />
-
-                        <div className="flex flex-col p-3">
-                          {isMonthSelection && (
-                            <div className="flex items-center space-x-2 rounded-md p-2 hover:bg-muted/50">
-                              <Checkbox
-                                id="weekend-only"
-                                checked={weekendOnly}
-                                onCheckedChange={(checked) => {
-                                  setWeekendOnly(checked === true);
-                                }}
+            <div className="grid gap-6 md:grid-cols-[1fr,1fr,1fr,1fr,auto]">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Departure</Label>
+                <Popover open={departureOpen} onOpenChange={setDepartureOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={departureOpen}
+                      className="justify-between w-full"
+                    >
+                      {departure
+                        ? airports.find(
+                            (airport) => airport.value === departure
+                          )?.label
+                        : "Departure Airport..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="Search airports..." />
+                      <CommandList>
+                        <CommandEmpty>No airport found.</CommandEmpty>
+                        <CommandGroup>
+                          {airports.map((airport) => (
+                            <CommandItem
+                              key={airport.value}
+                              value={airport.value}
+                              onSelect={(currentValue) => {
+                                setDeparture(
+                                  currentValue === departure ? "" : currentValue
+                                );
+                                setDepartureOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  departure === airport.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
                               />
-                              <Label
-                                htmlFor="weekend-only"
-                                className="text-sm font-medium cursor-pointer"
-                              >
-                                Weekend only
-                              </Label>
-                            </div>
-                          )}
+                              {airport.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Date</Label>
+                <Popover
+                  open={datePopoverOpen}
+                  onOpenChange={setDatePopoverOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "justify-between w-full text-left font-normal",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4" />
+                        {date
+                          ? (isMonthSelection
+                              ? format(date, "MMMM yyyy")
+                              : format(date, "PPP")) +
+                            (weekendOnly && isMonthSelection
+                              ? " (Weekend Only)"
+                              : "")
+                          : "Pick a date"}
+                      </div>
+                      <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <div className="p-3 border-b"></div>
+
+                    <div className="p-3 border-b">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">
+                          Select by:
+                        </Label>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "text-xs",
+                              !isMonthSelection &&
+                                "bg-primary text-primary-foreground"
+                            )}
+                            onClick={() => setIsMonthSelection(false)}
+                            type="button"
+                          >
+                            Day
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "text-xs",
+                              isMonthSelection &&
+                                "bg-primary text-primary-foreground"
+                            )}
+                            onClick={() => setIsMonthSelection(true)}
+                            type="button"
+                          >
+                            Month
+                          </Button>
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={(newDate) => {
-                        setDate(newDate);
-                        // setDatePopoverOpen(false);
-                      }}
-                      initialFocus
-                      disabled={disablePastDates}
-                    />
-                  )}
 
-                  <Button
-                    onClick={() => setDatePopoverOpen(false)}
-                    className="w-full  text-center font-normal mx-auto"
-                  >
-                    Ok
-                  </Button>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid gap-4 grid-cols-2">
+                    {isMonthSelection ? (
+                      <div className={cn("p-2")}>
+                        <div className="">
+                          <CustomDropdowns
+                            currMonth={month}
+                            setCurrMonth={(newMonth) => {
+                              const firstDay = new Date(
+                                newMonth.getFullYear(),
+                                newMonth.getMonth(),
+                                1
+                              );
+                              setDate(firstDay);
+                              setMonth(newMonth);
+                              // setDatePopoverOpen(false);
+                            }}
+                          />
+
+                          <div className="flex flex-col p-3">
+                            {isMonthSelection && (
+                              <div className="flex items-center space-x-2 rounded-md p-2 hover:bg-muted/50">
+                                <Checkbox
+                                  id="weekend-only"
+                                  checked={weekendOnly}
+                                  onCheckedChange={(checked) => {
+                                    setWeekendOnly(checked === true);
+                                  }}
+                                />
+                                <Label
+                                  htmlFor="weekend-only"
+                                  className="text-sm font-medium cursor-pointer"
+                                >
+                                  Weekend only
+                                </Label>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={(newDate) => {
+                          setDate(newDate);
+                          // setDatePopoverOpen(false);
+                        }}
+                        initialFocus
+                        disabled={disablePastDates}
+                      />
+                    )}
+
+                    <Button
+                      onClick={() => setDatePopoverOpen(false)}
+                      className="w-full  text-center font-normal mx-auto"
+                    >
+                      Ok
+                    </Button>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="adults" className="text-sm font-medium">
                   Adults
@@ -319,7 +330,7 @@ export default function FlightSearch() {
                   value={adults.toString()}
                   onValueChange={(value) => setAdults(Number.parseInt(value))}
                 >
-                  <SelectTrigger id="adults">
+                  <SelectTrigger id="adults" className="w-full">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
@@ -331,6 +342,7 @@ export default function FlightSearch() {
                   </SelectContent>
                 </Select>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="children" className="text-sm font-medium">
                   Children
@@ -342,7 +354,7 @@ export default function FlightSearch() {
                     if (option) setChildren(option.numeric);
                   }}
                 >
-                  <SelectTrigger id="children" className="">
+                  <SelectTrigger id="children" className="w-full">
                     <SelectValue placeholder="Select number" />
                   </SelectTrigger>
                   <SelectContent>
@@ -354,22 +366,22 @@ export default function FlightSearch() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full md:w-auto md:ml-auto"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <span className="animate-spin mr-2">◌</span>
-                  Searching...
-                </>
-              ) : (
-                "Search Flights"
-              )}
-            </Button>
+              <Button
+                type="submit"
+                className="w-full md:w-auto self-end"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="animate-spin mr-2">◌</span>
+                    Searching...
+                  </>
+                ) : (
+                  "Search Flights"
+                )}
+              </Button>
+            </div>
           </form>
         </div>
 
