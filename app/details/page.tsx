@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Info,
   AlertCircle,
+  Plane,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,7 +19,7 @@ export default function FlightDetailsPage() {
   const [addBaggage, setAddBaggage] = useState(false);
 
   return (
-    <div className="max-w-5xl mx-auto bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen max-w-5xl mx-auto">
       <div className="p-4 flex items-center border-b bg-white">
         <Link
           href="/search-results"
@@ -32,7 +33,7 @@ export default function FlightDetailsPage() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 p-4">
+      <div className="grid md:grid-cols-2 gap-6 p-4 mx-auto px-4 py-4">
         <div className="space-y-6">
           {/* Fare details */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -56,16 +57,13 @@ export default function FlightDetailsPage() {
                 <Info className="h-4 w-4 ml-1 text-gray-400" />
               </li>
             </ul>
-
-            
-
-            
           </div>
 
           {/* Outbound flight */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex justify-between mb-4">
               <h3 className="font-semibold">Bristol – Budapest</h3>
+              <span className="text-gray-500">Tue 4th March 2025</span>
             </div>
 
             <div className="flex items-center mb-4">
@@ -82,14 +80,13 @@ export default function FlightDetailsPage() {
                 <div className="font-semibold">Ryanair</div>
                 <div className="text-gray-500 text-sm">2h30m</div>
               </div>
-              
             </div>
 
             <div className="relative pl-6 border-l-2 border-gray-200">
               <div className="absolute left-0 top-0 w-3 h-3 rounded-full bg-gray-400 -translate-x-[7px]"></div>
               <div className="mb-8">
                 <div className="font-semibold">5:55am</div>
-                
+
                 <div className="text-sm text-gray-500">
                   Bristol Airport, BRS
                 </div>
@@ -98,7 +95,7 @@ export default function FlightDetailsPage() {
               <div className="absolute left-0 bottom-0 w-3 h-3 rounded-full bg-gray-400 -translate-x-[7px]"></div>
               <div>
                 <div className="font-semibold">9:25am</div>
-               
+
                 <div className="text-sm text-gray-500">
                   Budapest Ferenc Liszt International Airport, BUD
                 </div>
@@ -110,6 +107,7 @@ export default function FlightDetailsPage() {
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex justify-between mb-4">
               <h3 className="font-semibold">Budapest – Bristol</h3>
+              <span className="text-gray-500">Tue 4th March 2025</span>
             </div>
 
             <div className="flex items-center mb-4">
@@ -126,14 +124,13 @@ export default function FlightDetailsPage() {
                 <div className="font-semibold">Ryanair</div>
                 <div className="text-gray-500 text-sm">2h50m</div>
               </div>
-            
             </div>
 
             <div className="relative pl-6 border-l-2 border-gray-200">
               <div className="absolute left-0 top-0 w-3 h-3 rounded-full bg-gray-400 -translate-x-[7px]"></div>
               <div className="mb-8">
                 <div className="font-semibold">8:00pm</div>
-                
+
                 <div className="text-sm text-gray-500">
                   Budapest Ferenc Liszt International Airport, BUD
                 </div>
@@ -142,7 +139,7 @@ export default function FlightDetailsPage() {
               <div className="absolute left-0 bottom-0 w-3 h-3 rounded-full bg-gray-400 -translate-x-[7px]"></div>
               <div>
                 <div className="font-semibold">9:50pm</div>
-                
+
                 <div className="text-sm text-gray-500">
                   Bristol Airport, BRS
                 </div>
@@ -200,16 +197,12 @@ export default function FlightDetailsPage() {
           </div>
 
           {/* More deals */}
-          
-
-          
 
           {/* Support message */}
           <div className="mt-6 text-center text-sm text-gray-500">
-            <p>We're here for you 👋 before and after your flight.</p>
             <p>
-              We'd help during the flight too, but the signal ain't great up
-              there
+              Make sure you carefully check the flight details on the agent
+              website as we are not liable for booking incorrect flights.
             </p>
           </div>
         </div>

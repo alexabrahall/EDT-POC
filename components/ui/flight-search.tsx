@@ -104,26 +104,6 @@ export default function FlightSearch() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-100 to-white dark:from-gray-900 dark:to-gray-800">
-      <header className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Plane className="h-6 w-6" />
-            <span className="text-xl font-bold">DayTripper</span>
-          </div>
-          <nav className="hidden md:flex space-x-6">
-            <a href="#" className="text-sm font-medium hover:underline">
-              About
-            </a>
-            <a href="#" className="text-sm font-medium hover:underline">
-              Destinations
-            </a>
-            <a href="#" className="text-sm font-medium hover:underline">
-              Contact
-            </a>
-          </nav>
-        </div>
-      </header>
-
       <main className="container mx-auto px-4 py-16 md:py-24">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
@@ -322,49 +302,51 @@ export default function FlightSearch() {
                 </Popover>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="adults" className="text-sm font-medium">
-                  Adults
-                </Label>
-                <Select
-                  value={adults.toString()}
-                  onValueChange={(value) => setAdults(Number.parseInt(value))}
-                >
-                  <SelectTrigger id="adults" className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6].map((num) => (
-                      <SelectItem key={num} value={num.toString()}>
-                        {num}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                <div className="space-y-2">
+                  <Label htmlFor="adults" className="text-sm font-medium">
+                    Adults
+                  </Label>
+                  <Select
+                    value={adults.toString()}
+                    onValueChange={(value) => setAdults(Number.parseInt(value))}
+                  >
+                    <SelectTrigger id="adults" className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6].map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="children" className="text-sm font-medium">
-                  Children
-                </Label>
-                <Select
-                  value={currentOption.value}
-                  onValueChange={(value) => {
-                    const option = options.find((opt) => opt.value === value);
-                    if (option) setChildren(option.numeric);
-                  }}
-                >
-                  <SelectTrigger id="children" className="w-full">
-                    <SelectValue placeholder="Select number" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {options.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="children" className="text-sm font-medium">
+                    Children
+                  </Label>
+                  <Select
+                    value={currentOption.value}
+                    onValueChange={(value) => {
+                      const option = options.find((opt) => opt.value === value);
+                      if (option) setChildren(option.numeric);
+                    }}
+                  >
+                    <SelectTrigger id="children" className="w-full">
+                      <SelectValue placeholder="Select number" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {options.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <Button

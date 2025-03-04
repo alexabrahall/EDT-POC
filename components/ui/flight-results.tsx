@@ -336,18 +336,7 @@ export default function FlightResults() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="border-b bg-white dark:bg-gray-800">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Plane className="h-6 w-6" />
-                <span className="text-xl font-bold">DayTripper</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      
 
       <main className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between my-2">
