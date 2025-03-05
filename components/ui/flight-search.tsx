@@ -113,6 +113,9 @@ export default function FlightSearch() {
             Discover amazing destinations just a short flight away. Perfect for
             spontaneous adventures.
           </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            This is a proof of concept - not for real bookings currently
+          </p>
         </div>
 
         <div className="max-w-4xl mx-auto">
