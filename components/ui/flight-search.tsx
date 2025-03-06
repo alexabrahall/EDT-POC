@@ -49,14 +49,14 @@ const sampleFeedData = [
     id: 1,
     user: {
       name: "Sarah Johnson",
-      avatar: "/avatars/sarah.jpg",
+      avatar: "https://randomuser.me/api/portraits/women/45.jpg",
       level: "Elite Explorer",
     },
     trip: {
       city: "Paris",
       duration: "12 hours",
       highlights: ["Eiffel Tower", "Louvre Museum", "Notre-Dame"],
-      image: "/cities/paris.jpg",
+      image: "https://lh6.googleusercontent.com/proxy/QndxTELkb_urxOPPIhaDOFSyKXZ8etFnaGjD-KInr-emfBrl_wnpILnAHFVSQVDh-_5-ZsYXupDg1204MBPS-TgVJoHTnmO_thI6w_FZBisWimBVaJvAMx7aiubm-i2XH71GVos4BYkZvh0kIoh7HCkULBBOtkcsUvkO",
     },
     stats: {
       likes: 234,
@@ -68,14 +68,14 @@ const sampleFeedData = [
     id: 2,
     user: {
       name: "Mike Chen",
-      avatar: "/avatars/mike.jpg",
+      avatar: "https://randomuser.me/api/portraits/men/57.jpg",
       level: "Day Trip Pro",
     },
     trip: {
       city: "Amsterdam",
       duration: "10 hours",
       highlights: ["Van Gogh Museum", "Anne Frank House", "Canal Cruise"],
-      image: "/cities/amsterdam.jpg",
+      image: "https://www.holland.com/upload_mm/2/4/4/80160_fullimage_rondvaartboot%20vaart%20onder%20brug%20door%20met%20mooie%20wolkenlucht%20%C2%A9%20illusion-x%20via%20pixabay_1150x663_438x353.jpg",
     },
     stats: {
       likes: 189,
@@ -87,14 +87,14 @@ const sampleFeedData = [
     id: 3,
     user: {
       name: "Emma Wilson",
-      avatar: "/avatars/emma.jpg",
+      avatar: "https://randomuser.me/api/portraits/women/76.jpg",
       level: "Weekend Warrior",
     },
     trip: {
       city: "Barcelona",
       duration: "14 hours",
       highlights: ["Sagrada Familia", "Park Güell", "La Rambla"],
-      image: "/cities/barcelona.jpg",
+      image: "https://i.natgeofe.com/n/295349af-5e41-4681-9497-58d72eaf8254/temple-barcelona-spain.jpg",
     },
     stats: {
       likes: 312,
@@ -126,6 +126,11 @@ export default function FlightSearch() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const feedRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState("search")
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+  }
 
   // Create a Date object for tomorrow
   const tomorrow = new Date();
@@ -230,6 +235,7 @@ This itinerary maximizes your time in ${itineraryCity} while ensuring you catch 
     console.log("Setting up intersection observer");
     const observer = new IntersectionObserver(
       (entries) => {
+        console.log(entries)
         const target = entries[0];
         console.log(
           "Intersection:",
@@ -244,21 +250,22 @@ This itinerary maximizes your time in ${itineraryCity} while ensuring you catch 
           loadMorePosts();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: "100px" }
     );
 
     const currentRef = feedRef.current;
+    console.log(currentRef)
     if (currentRef) {
       console.log("Observing element");
       observer.observe(currentRef);
     }
 
     return () => {
-      // if (currentRef) {
-      //   observer.unobserve(currentRef);
-      // }
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
     };
-  }, [isLoadingMore, hasMore]);
+  }, [isLoadingMore, hasMore, activeTab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-100 to-white dark:from-gray-900 dark:to-gray-800">
@@ -276,7 +283,7 @@ This itinerary maximizes your time in ${itineraryCity} while ensuring you catch 
           </p>
         </div>
 
-        <Tabs defaultValue="search" className="max-w-4xl mx-auto">
+        <Tabs defaultValue="search" className="max-w-4xl mx-auto" onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="search">Search Flights</TabsTrigger>
             <TabsTrigger value="itinerary">Itinerary Generator</TabsTrigger>
@@ -301,8 +308,8 @@ This itinerary maximizes your time in ${itineraryCity} while ensuring you catch 
                       >
                         {departure
                           ? airports.find(
-                              (airport) => airport.value === departure
-                            )?.label
+                            (airport) => airport.value === departure
+                          )?.label
                           : "Departure Airport..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -362,11 +369,11 @@ This itinerary maximizes your time in ${itineraryCity} while ensuring you catch 
                           <CalendarIcon className="h-4 w-4" />
                           {date
                             ? (isMonthSelection
-                                ? format(date, "MMMM yyyy")
-                                : format(date, "PPP")) +
-                              (weekendOnly && isMonthSelection
-                                ? " (Weekend Only)"
-                                : "")
+                              ? format(date, "MMMM yyyy")
+                              : format(date, "PPP")) +
+                            (weekendOnly && isMonthSelection
+                              ? " (Weekend Only)"
+                              : "")
                             : "Pick a date"}
                         </div>
                         <ChevronsUpDown className="h-4 w-4 opacity-50" />
@@ -387,7 +394,7 @@ This itinerary maximizes your time in ${itineraryCity} while ensuring you catch 
                               className={cn(
                                 "text-xs",
                                 !isMonthSelection &&
-                                  "bg-primary text-primary-foreground"
+                                "bg-primary text-primary-foreground"
                               )}
                               onClick={() => setIsMonthSelection(false)}
                               type="button"
@@ -400,7 +407,7 @@ This itinerary maximizes your time in ${itineraryCity} while ensuring you catch 
                               className={cn(
                                 "text-xs",
                                 isMonthSelection &&
-                                  "bg-primary text-primary-foreground"
+                                "bg-primary text-primary-foreground"
                               )}
                               onClick={() => setIsMonthSelection(true)}
                               type="button"
