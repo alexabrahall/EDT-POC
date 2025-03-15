@@ -34,10 +34,35 @@ import { CustomDropdowns } from "./custom-dropdowns";
 
 // Sample airports data - in a real app, this would come from an API
 const airports = [
-  { value: "lhr", label: "London Heathrow (LHR)", country: "United Kingdom" },
-  { value: "cdg", label: "Paris Charles de Gaulle (CDG)", country: "France" },
-  { value: "jfk", label: "New York JFK (JFK)", country: "United States" },
-  { value: "dxb", label: "Dubai International (DXB)", country: "UAE" },
+  { value: "LHR", label: "London Heathrow (LHR)", country: "United Kingdom" },
+  { value: "LGW", label: "London Gatwick (LGW)", country: "United Kingdom" },
+  { value: "LTN", label: "London Luton (LTN)", country: "United Kingdom" },
+  { value: "STN", label: "London Stansted (STN)", country: "United Kingdom" },
+  { value: "SOU", label: "Southampton (SOU)", country: "United Kingdom" },
+  { value: "MAN", label: "Manchester (MAN)", country: "United Kingdom" },
+  { value: "BHX", label: "Birmingham (BHX)", country: "United Kingdom" },
+  { value: "EDI", label: "Edinburgh (EDI)", country: "United Kingdom" },
+  { value: "GLA", label: "Glasgow (GLA)", country: "United Kingdom" },
+  { value: "BRS", label: "Bristol (BRS)", country: "United Kingdom" },
+  { value: "NCL", label: "Newcastle (NCL)", country: "United Kingdom" },
+  { value: "LBA", label: "Leeds Bradford (LBA)", country: "United Kingdom" },
+  { value: "ABZ", label: "Aberdeen (ABZ)", country: "United Kingdom" },
+  {
+    value: "BFS",
+    label: "Belfast International (BFS)",
+    country: "United Kingdom",
+  },
+  { value: "CWL", label: "Cardiff (CWL)", country: "United Kingdom" },
+  { value: "EXT", label: "Exeter (EXT)", country: "United Kingdom" },
+  { value: "BOH", label: "Bournemouth (BOH)", country: "United Kingdom" },
+  { value: "EMA", label: "East Midlands (EMA)", country: "United Kingdom" },
+  { value: "HUY", label: "Humberside (HUY)", country: "United Kingdom" },
+  { value: "INV", label: "Inverness (INV)", country: "United Kingdom" },
+  { value: "NWI", label: "Norwich (NWI)", country: "United Kingdom" },
+  { value: "PLH", label: "Plymouth (PLH)", country: "United Kingdom" },
+  { value: "MME", label: "Teesside (MME)", country: "United Kingdom" },
+  { value: "PIK", label: "Glasgow Prestwick (PIK)", country: "United Kingdom" },
+  { value: "LDY", label: "Derry (LDY)", country: "United Kingdom" },
 ];
 
 export default function FlightSearch() {
