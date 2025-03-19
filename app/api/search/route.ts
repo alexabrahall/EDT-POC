@@ -324,7 +324,7 @@ const makeRequest = async (startTime: string, endTime: string) => {
     `https://aerodatabox.p.rapidapi.com/flights/airports/iata/BHX/${startTime}/${endTime}?withLeg=true&direction=Both&withCancelled=false&withCodeshared=false&withCargo=false&withPrivate=false&withLocation=false`,
     {
       headers: {
-        "x-rapidapi-key": "1189de0bddmshf3e96459c17409fp1cb47cjsne48f46f6c8ff",
+        "x-rapidapi-key": "81ed9cb398msh399a5fccc6b1cebp1320dejsn66e2049aceff",
         "x-rapidapi-host": "aerodatabox.p.rapidapi.com",
       },
     }
@@ -404,8 +404,11 @@ export async function GET(request: Request) {
     // If no flights found in database, proceed with API calls
     // Calculate next day's date for the 2 AM end time
     const nextDay = new Date(params.data.date);
+    console.log(nextDay);
     nextDay.setDate(nextDay.getDate() + 1);
+    console.log(nextDay);
     const nextDayStr = nextDay.toISOString().split("T")[0];
+    console.log(nextDayStr);
 
     // Make API calls in parallel
     const [outboundFlight, inboundFlight] = await Promise.all([
@@ -563,7 +566,11 @@ export async function GET(request: Request) {
       message: "Valid parameters received",
     });
   } catch (error) {
-    console.error("Error in search route:", error.stack);
+    // console.error("Error in search route:", error.stack);
+
+    // if (axios.isAxiosError(error)) {
+    //   console.log(error.response);
+    // }
     return Response.json({
       success: false,
       error: "Internal server error",
