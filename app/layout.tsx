@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DayTrippr - POC",
   description: "DayTrippr Proof of Concept",
+  icons: {
+    icon: "/logos/icon-colour.svg",
+  },
 };
 
 export default function RootLayout({

@@ -1,8 +1,90 @@
 import axios from "axios";
-import { Airport, PrismaClient, Flight as FlightDb } from "@prisma/client";
 import { z } from "zod";
+import prisma from "@/prisma/prisma";
+import moment from "moment-timezone";
+import { Airport } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// Add request timeout
+const REQUEST_TIMEOUT = 30000; // 30 seconds
+
+// Add connection pool size
+const MAX_CONCURRENT_REQUESTS = 1;
+
+// Add semaphore for controlling concurrent requests
+let activeRequests = 0;
+const requestQueue: (() => void)[] = [];
+
+// Add airport cache
+let airportCache: Map<string, Airport> = new Map();
+
+async function initializeAirportCache() {
+  if (airportCache === null) {
+    const airports = await prisma.airport.findMany();
+    airportCache = new Map(airports.map((airport) => [airport.code, airport]));
+  }
+  return airportCache;
+}
+
+async function getAirport(iata: string) {
+  if (!iata) {
+    return null;
+  }
+
+  let airport = airportCache.get(iata);
+  if (airport) {
+    return airport;
+  }
+
+  airport = await prisma.airport.findUnique({
+    where: {
+      code: iata,
+    },
+  });
+
+  if (airport) {
+    airportCache.set(iata, airport);
+    return airport;
+  }
+
+  console.log(`Getting Airport: ${iata}`);
+  let resp = await axios.get(
+    `https://iata-airports.p.rapidapi.com/airports/${iata}/`,
+    {
+      headers: {
+        "x-rapidapi-key": "81ed9cb398msh399a5fccc6b1cebp1320dejsn66e2049aceff",
+        "x-rapidapi-host": "iata-airports.p.rapidapi.com",
+      },
+    }
+  );
+
+  const airportData = resp.data as AirportResponse;
+
+  let newAirport = await prisma.airport.create({
+    data: {
+      code: airportData.code,
+      name: airportData.name,
+      city: airportData.city || "",
+      country: airportData.country || "",
+      timezone: airportData.time_zone || "",
+    },
+  });
+
+  airportCache.set(iata, newAirport);
+  return newAirport;
+}
+
+async function acquireRequest() {
+  if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
+    await new Promise<void>((resolve) => requestQueue.push(resolve));
+  }
+  activeRequests++;
+}
+
+function releaseRequest() {
+  activeRequests--;
+  const next = requestQueue.shift();
+  if (next) next();
+}
 
 const searchParamsSchema = z.object({
   departure: z.string().min(3),
@@ -130,71 +212,81 @@ type Flight = {
   number: string;
   airline: { iata: string; name: string };
 };
-async function getAirport(iata: string): Promise<Airport> {
-  console.log(`Getting Airport: ${iata}`);
-  const airport = await prisma.airport.findFirst({
-    where: {
-      code: iata,
-    },
-  });
 
-  if (!airport) {
-    let resp = await axios.get(
-      `https://iata-airports.p.rapidapi.com/airports/${iata}/`,
-      {
-        headers: {
-          "x-rapidapi-key":
-            "81ed9cb398msh399a5fccc6b1cebp1320dejsn66e2049aceff",
-          "x-rapidapi-host": "iata-airports.p.rapidapi.com",
-        },
-      }
-    );
+type FlightDb = {
+  id: string;
+  date: Date;
+  departureLocalTime: Date;
+  departureGMTTime: Date;
+  arrivalLocalTime: Date;
+  arrivalGMTTime: Date;
+  airline: string;
+  flightNumber: string;
+  airportId: string;
+  arrivalAirportId: string;
+  departureAirport: {
+    id: string;
+    code: string;
+    name: string;
+    city: string;
+    country: string;
+  };
+  arrivalAirport: {
+    id: string;
+    code: string;
+    name: string;
+    city: string;
+    country: string;
+  };
+};
 
-    const airportData = resp.data as AirportResponse;
+function transformToFlightDb(
+  flight: Root["departures"][0] | Root["arrivals"][0],
+  departureAirport: {
+    id: string;
+    code: string;
+    name: string;
+    city: string;
+    country: string;
+    timezone: string;
+  },
+  arrivalAirport: {
+    id: string;
+    code: string;
+    name: string;
+    city: string;
+    country: string;
+    timezone: string;
+  },
+  date: string
+): FlightDb {
+  // Helper function to parse dates that already include timezone offset
+  const parseDateWithOffset = (dateStr: string, tz: string) => {
+    if (!dateStr) return new Date();
 
-    let newAiport = await prisma.airport.create({
-      data: {
-        code: airportData.code,
-        name: airportData.name,
-        city: airportData.city || "",
-        country: airportData.country || "",
-      },
-    });
+    return new Date(dateStr + "Z");
+  };
 
-    return newAiport;
-  }
-  return airport;
-}
-
-function findDayTrips(departures: Flight[], arrivals: Flight[]) {
-  const trips: { departure: Flight; return: Flight }[] = [];
-
-  departures.forEach((dep) => {
-    const depAirport = dep.departure.airport?.iata;
-    const arrAirport = dep.arrival.airport?.iata;
-    const depTime = new Date(dep.departure.scheduledTime?.utc || "");
-    const arrTime = new Date(dep.arrival.scheduledTime?.utc || "");
-
-    const sameDayReturns = arrivals.filter((ret) => {
-      const retDepAirport = ret.departure.airport?.iata;
-      const retArrAirport = ret.arrival.airport?.iata;
-      const retDepTime = new Date(ret.departure.scheduledTime?.utc || "");
-      const retArrTime = new Date(ret.arrival.scheduledTime.utc);
-
-      return (
-        retDepAirport === arrAirport &&
-        retArrAirport === depAirport &&
-        depTime.toDateString() === retDepTime.toDateString() &&
-        (retDepTime.getTime() - arrTime.getTime()) / (1000 * 60 * 60) >= 6
-      );
-    });
-
-    sameDayReturns.forEach((ret) =>
-      trips.push({ departure: dep, return: ret })
-    );
-  });
-
-  return trips;
+  return {
+    id: Math.random().toString(36).substring(7), // Generate a random ID
+    date: new Date(date),
+    departureLocalTime: parseDateWithOffset(
+      flight.departure.scheduledTime?.local || "",
+      departureAirport.timezone
+    ),
+    departureGMTTime: new Date(flight.departure.scheduledTime?.utc || ""),
+    arrivalLocalTime: parseDateWithOffset(
+      flight.arrival.scheduledTime?.local || "",
+      arrivalAirport.timezone
+    ),
+    arrivalGMTTime: new Date(flight.arrival.scheduledTime?.utc || ""),
+    airline: flight.airline.name,
+    flightNumber: flight.number,
+    airportId: departureAirport.id,
+    arrivalAirportId: arrivalAirport.id,
+    departureAirport,
+    arrivalAirport,
+  };
 }
 
 function findDayTripsFromDb(
@@ -241,170 +333,243 @@ const makeRequest = async (startTime: string, endTime: string) => {
 };
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  try {
+    await acquireRequest();
 
-  const params = searchParamsSchema.safeParse(Object.fromEntries(searchParams));
+    const { searchParams } = new URL(request.url);
+    const params = searchParamsSchema.safeParse(
+      Object.fromEntries(searchParams)
+    );
 
-  if (!params.success) {
+    if (!params.success) {
+      return Response.json({
+        success: false,
+        error: "Invalid parameters",
+        details: params.error,
+      });
+    }
+
+    params.data.date = new Date(params.data.date).toISOString().split("T")[0];
+
+    // Check for existing flights in the database
+    const startOfDay = new Date(params.data.date);
+    const endOfDay = new Date(params.data.date);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    const existingFlights = await prisma.flight.findMany({
+      where: {
+        date: {
+          gte: startOfDay,
+          lt: endOfDay,
+        },
+        OR: [
+          {
+            departureAirport: {
+              code: params.data.departure,
+            },
+          },
+          {
+            arrivalAirport: {
+              code: params.data.departure,
+            },
+          },
+        ],
+      },
+      include: {
+        departureAirport: true,
+        arrivalAirport: true,
+      },
+    });
+
+    if (existingFlights.length > 0) {
+      console.log("Existing flights found in database");
+      // Process existing flights from database
+      const outboundFlights = existingFlights.filter(
+        (flight) => flight.departureAirport.code === params.data.departure
+      );
+
+      const inboundFlights = existingFlights.filter(
+        (flight) => flight.arrivalAirport.code === params.data.departure
+      );
+
+      const routes = findDayTripsFromDb(outboundFlights, inboundFlights);
+
+      return Response.json({
+        success: true,
+        routes,
+        message: "Retrieved from database",
+      });
+    }
+
+    // If no flights found in database, proceed with API calls
+    // Calculate next day's date for the 2 AM end time
+    const nextDay = new Date(params.data.date);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextDayStr = nextDay.toISOString().split("T")[0];
+
+    // Make API calls in parallel
+    const [outboundFlight, inboundFlight] = await Promise.all([
+      makeRequest(`${params.data.date}T06:00`, `${params.data.date}T18:00`),
+      makeRequest(`${params.data.date}T18:00`, `${nextDayStr}T02:00`),
+    ]);
+
+    // Transform outbound flights
+    const outboundFlights = await Promise.all(
+      outboundFlight.departures.map(async (flight) => {
+        const [departureAirport, arrivalAirport] = await Promise.all([
+          getAirport(params.data.departure),
+          getAirport(flight.arrival.airport.iata),
+        ]);
+
+        if (!departureAirport || !arrivalAirport) {
+          return null;
+        }
+
+        // Transform to FlightData interface
+        const flightData: FlightData = {
+          date: params.data.date,
+          departureAirport: {
+            name: departureAirport.name,
+            code: departureAirport.code,
+            city: departureAirport.city,
+            country: departureAirport.country,
+            timezone: departureAirport.timezone,
+          },
+          departureLocalTime: flight.departure.scheduledTime?.local || "",
+          departureGMTTime: flight.departure.scheduledTime?.utc || "",
+          arrivalAirport: {
+            name: arrivalAirport.name,
+            code: arrivalAirport.code,
+            city: arrivalAirport.city,
+            country: arrivalAirport.country,
+            timezone: arrivalAirport.timezone,
+          },
+          arrivalLocalTime: flight.arrival.scheduledTime?.local || "",
+          arrivalGMTTime: flight.arrival.scheduledTime?.utc || "",
+          airline: flight.airline.name,
+          flightNumber: flight.number,
+          slug: `${params.data.departure}-${flight.number}-${params.data.date}`,
+        };
+
+        // Send to microservice
+        try {
+          const microserviceUrl =
+            process.env.ENVIRONMENT === "development"
+              ? "http://localhost:3001"
+              : "https://api.evntcentral.com";
+          axios.post(`${microserviceUrl}/daytrippr/flights`, flightData);
+        } catch (error) {
+          console.error("Error sending flight data to microservice:", error);
+        }
+
+        return transformToFlightDb(
+          flight,
+          departureAirport,
+          arrivalAirport,
+          params.data.date
+        );
+      })
+    );
+
+    interface AirportData {
+      name: string;
+      code: string;
+      city: string;
+      country: string;
+      timezone: string;
+    }
+
+    interface FlightData {
+      date: string;
+      departureAirport: AirportData;
+      departureLocalTime: string;
+      departureGMTTime: string;
+      arrivalAirport: AirportData;
+      arrivalLocalTime: string;
+      arrivalGMTTime: string;
+      airline: string;
+      flightNumber: string;
+      slug: string;
+    }
+
+    // Transform inbound flights
+    const inboundFlights = await Promise.all(
+      inboundFlight.arrivals
+        .filter((flight) => flight.departure.airport?.iata)
+        .map(async (flight) => {
+          const [departureAirport, arrivalAirport] = await Promise.all([
+            getAirport(flight.departure.airport?.iata || ""),
+            getAirport(params.data.departure),
+          ]);
+
+          if (!departureAirport || !arrivalAirport) {
+            return null;
+          }
+
+          // Transform to FlightData interface
+          const flightData: FlightData = {
+            date: params.data.date,
+            departureAirport: {
+              name: departureAirport.name,
+              code: departureAirport.code,
+              city: departureAirport.city,
+              country: departureAirport.country,
+              timezone: departureAirport.timezone,
+            },
+            departureLocalTime: flight.departure.scheduledTime?.local || "",
+            departureGMTTime: flight.departure.scheduledTime?.utc || "",
+            arrivalAirport: {
+              name: arrivalAirport.name,
+              code: arrivalAirport.code,
+              city: arrivalAirport.city,
+              country: arrivalAirport.country,
+              timezone: arrivalAirport.timezone,
+            },
+            arrivalLocalTime: flight.arrival.scheduledTime?.local || "",
+            arrivalGMTTime: flight.arrival.scheduledTime?.utc || "",
+            airline: flight.airline.name,
+            flightNumber: flight.number,
+            slug: `${params.data.departure}-${flight.number}-${params.data.date}`,
+          };
+
+          // Send to microservice
+          try {
+            const microserviceUrl =
+              process.env.ENVIRONMENT === "development"
+                ? "http://localhost:3001"
+                : "https://api.evntcentral.com";
+            axios.post(`${microserviceUrl}/daytrippr/flights`, flightData);
+          } catch (error) {
+            console.error("Error sending flight data to microservice:", error);
+          }
+
+          return transformToFlightDb(
+            flight,
+            departureAirport,
+            arrivalAirport,
+            params.data.date
+          );
+        })
+    );
+
+    const routes = findDayTripsFromDb(
+      outboundFlights.filter((flight) => flight !== null),
+      inboundFlights.filter((flight) => flight !== null)
+    );
+
+    return Response.json({
+      success: true,
+      routes,
+      message: "Valid parameters received",
+    });
+  } catch (error) {
+    console.error("Error in search route:", error.stack);
     return Response.json({
       success: false,
-      error: "Invalid parameters",
-      details: params.error,
+      error: "Internal server error",
+      message: error.message,
     });
+  } finally {
+    releaseRequest();
   }
-
-  params.data.date = new Date(params.data.date).toISOString().split("T")[0];
-  //check if routes alread exist in db
-  const goingFlights = await prisma.flight.findMany({
-    where: {
-      departureAirport: {
-        code: params.data.departure,
-      },
-      date: new Date(params.data.date),
-    },
-    include: {
-      departureAirport: true,
-      arrivalAirport: true,
-    },
-  });
-
-  console.log(goingFlights);
-
-  const returningFlights = await prisma.flight.findMany({
-    where: {
-      arrivalAirport: {
-        code: params.data.departure,
-      },
-      date: new Date(params.data.date),
-    },
-    include: {
-      departureAirport: true,
-      arrivalAirport: true,
-    },
-  });
-  console.log(returningFlights);
-
-  const routes = findDayTripsFromDb(goingFlights, returningFlights);
-  // console.log(routes);
-
-  if (routes.length > 0) {
-    return Response.json({
-      routes,
-      success: true,
-    });
-  }
-
-  if (routes.length > 0) {
-    return Response.json({
-      routes,
-      success: true,
-    });
-  }
-
-  let outboundFlights: Flight[] = [];
-  let inboundFlights: Flight[] = [];
-
-  const outboundFlight = await makeRequest(
-    `${params.data.date}T06:00`,
-    `${params.data.date}T18:00`
-  );
-
-  //add to db
-  let newOutboundFlights: FlightDb[] = [];
-  for (const flight of outboundFlight.departures) {
-    let fromAirport = await getAirport(params.data.departure);
-    let toAirport = await getAirport(flight.arrival.airport?.iata || "");
-    newOutboundFlights.push(
-      await prisma.flight.create({
-        data: {
-          date: new Date(params.data.date),
-          departureLocalTime: new Date(
-            flight.departure.scheduledTime?.local || ""
-          ),
-          departureGMTTime: new Date(flight.departure.scheduledTime?.utc || ""),
-          arrivalLocalTime: new Date(flight.arrival.scheduledTime?.local || ""),
-          arrivalGMTTime: new Date(flight.arrival.scheduledTime?.utc || ""),
-          airline: flight.airline.name,
-          flightNumber: flight.number,
-          departureAirport: {
-            connect: {
-              id: fromAirport.id,
-            },
-          },
-          arrivalAirport: {
-            connect: {
-              id: toAirport.id,
-            },
-          },
-        },
-        include: {
-          departureAirport: true,
-          arrivalAirport: true,
-        },
-      })
-    );
-  }
-
-  outboundFlights = outboundFlight.departures;
-
-  // Calculate next day's date for the 2 AM end time
-  const nextDay = new Date(params.data.date);
-  nextDay.setDate(nextDay.getDate() + 1);
-  const nextDayStr = nextDay.toISOString().split("T")[0];
-
-  const inboundFlight = await makeRequest(
-    `${params.data.date}T18:00`,
-    `${nextDayStr}T02:00`
-  );
-
-  inboundFlights = inboundFlight.arrivals;
-
-  let newInboundFlights: FlightDb[] = [];
-  for (const flight of inboundFlight.arrivals) {
-    if (!flight.departure.airport?.iata) {
-      continue;
-    }
-    console.log(`Flight: ${JSON.stringify(flight)}`);
-    let fromAirport = await getAirport(flight.departure.airport?.iata || "");
-    let toAirport = await getAirport(params.data.departure || "");
-    console.log(`From Airport: ${JSON.stringify(fromAirport)}`);
-    console.log(`To Airport: ${JSON.stringify(toAirport)}`);
-    newInboundFlights.push(
-      await prisma.flight.create({
-        data: {
-          date: new Date(params.data.date),
-          departureLocalTime: new Date(
-            flight.departure.scheduledTime?.local || ""
-          ),
-          departureGMTTime: new Date(flight.departure.scheduledTime?.utc || ""),
-          arrivalLocalTime: new Date(flight.arrival.scheduledTime?.local || ""),
-          arrivalGMTTime: new Date(flight.arrival.scheduledTime?.utc || ""),
-          airline: flight.airline.name,
-          flightNumber: flight.number,
-          departureAirport: {
-            connect: {
-              id: fromAirport.id,
-            },
-          },
-          arrivalAirport: {
-            connect: {
-              id: toAirport.id,
-            },
-          },
-        },
-        include: {
-          departureAirport: true,
-          arrivalAirport: true,
-        },
-      })
-    );
-  }
-
-  const dayTrips = findDayTripsFromDb(newOutboundFlights, newInboundFlights);
-
-  return Response.json({
-    success: true,
-    routes: dayTrips,
-    message: "Valid parameters received",
-  });
 }

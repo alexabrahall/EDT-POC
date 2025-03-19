@@ -29,6 +29,41 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatDate } from "../utils/utils";
 import { Flight } from "@prisma/client";
+import { format } from "date-fns";
+
+// Sample airports data
+const airports = [
+  { value: "LHR", label: "London Heathrow (LHR)", country: "United Kingdom" },
+  { value: "LGW", label: "London Gatwick (LGW)", country: "United Kingdom" },
+  { value: "LTN", label: "London Luton (LTN)", country: "United Kingdom" },
+  { value: "STN", label: "London Stansted (STN)", country: "United Kingdom" },
+  { value: "SOU", label: "Southampton (SOU)", country: "United Kingdom" },
+  { value: "MAN", label: "Manchester (MAN)", country: "United Kingdom" },
+  { value: "BHX", label: "Birmingham (BHX)", country: "United Kingdom" },
+  { value: "EDI", label: "Edinburgh (EDI)", country: "United Kingdom" },
+  { value: "GLA", label: "Glasgow (GLA)", country: "United Kingdom" },
+  { value: "BRS", label: "Bristol (BRS)", country: "United Kingdom" },
+  { value: "NCL", label: "Newcastle (NCL)", country: "United Kingdom" },
+  { value: "LBA", label: "Leeds Bradford (LBA)", country: "United Kingdom" },
+  { value: "ABZ", label: "Aberdeen (ABZ)", country: "United Kingdom" },
+  {
+    value: "BFS",
+    label: "Belfast International (BFS)",
+    country: "United Kingdom",
+  },
+  { value: "CWL", label: "Cardiff (CWL)", country: "United Kingdom" },
+  { value: "EXT", label: "Exeter (EXT)", country: "United Kingdom" },
+  { value: "BOH", label: "Bournemouth (BOH)", country: "United Kingdom" },
+  { value: "EMA", label: "East Midlands (EMA)", country: "United Kingdom" },
+  { value: "HUY", label: "Humberside (HUY)", country: "United Kingdom" },
+  { value: "INV", label: "Inverness (INV)", country: "United Kingdom" },
+  { value: "NWI", label: "Norwich (NWI)", country: "United Kingdom" },
+  { value: "PLH", label: "Plymouth (PLH)", country: "United Kingdom" },
+  { value: "MME", label: "Teesside (MME)", country: "United Kingdom" },
+  { value: "PIK", label: "Glasgow Prestwick (PIK)", country: "United Kingdom" },
+  { value: "LDY", label: "Derry (LDY)", country: "United Kingdom" },
+];
+
 export type ApiResponse = {
   routes: Array<{
     departure: {
@@ -44,6 +79,7 @@ export type ApiResponse = {
       updatedAt: string;
       airportId: string;
       arrivalAirportId: string;
+      slug: string;
       departureAirport: {
         id: string;
         name: string;
@@ -76,6 +112,7 @@ export type ApiResponse = {
       updatedAt: string;
       airportId: string;
       arrivalAirportId: string;
+      slug: string;
       departureAirport: {
         id: string;
         name: string;
@@ -407,9 +444,24 @@ export default function FlightResults() {
       <main className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between my-2">
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-muted-foreground">
-              London → Paris • Thu 27 Mar • 1 Adult
-            </div>
+            {/* <div className="text-sm text-muted-foreground">
+              {(() => {
+                const params = new URLSearchParams(window.location.search);
+                const departure =
+                  airports
+                    .find((a) => a.value === params.get("departure"))
+                    ?.label?.split(" (")[0] || "Loading...";
+                const date = params.get("date")
+                  ? format(new Date(params.get("date")!), "EEE dd MMM")
+                  : "";
+                const adults = params.get("adults") || "1";
+                const children = params.get("children") || "0";
+                const totalPassengers = parseInt(adults) + parseInt(children);
+                return `${departure} • ${date} • ${totalPassengers} ${
+                  totalPassengers === 1 ? "Adult" : "Adults"
+                }${children !== "0" ? ` (${children} Children)` : ""}`;
+              })()}
+            </div> */}
           </div>
           <Button
             variant="outline"
@@ -452,14 +504,13 @@ export default function FlightResults() {
               <div className="flex items-center justify-center min-h-[400px] flex-col">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 <p className="text-muted-foreground">Loading...</p>
-                <p className="text-muted-foreground">Also hello Ben & Arran</p>
                 <p className="text-muted-foreground">
-                  Remember this is a PoC so theres probably a few bugs
+                  This is a PoC - bugs are expected
                 </p>
               </div>
             ) : (
               filteredFlights.map((flight) => (
-                <Card key={flight.departure.id}>
+                <Card key={flight.departure.slug + flight.return.slug}>
                   <CardContent className="p-6">
                     <div className="flex flex-col space-y-4">
                       <div className="flex items-center justify-between">
