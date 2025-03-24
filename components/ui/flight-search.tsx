@@ -180,11 +180,12 @@ export default function FlightSearch() {
                           {airports.map((airport) => (
                             <CommandItem
                               key={airport.value}
-                              value={airport.value}
+                              value={airport.label}
                               onSelect={(currentValue) => {
-                                setDeparture(
-                                  currentValue === departure ? "" : currentValue
+                                const selectedAirport = airports.find(
+                                  (a) => a.label === currentValue
                                 );
+                                setDeparture(selectedAirport?.value || "");
                                 setDepartureOpen(false);
                               }}
                             >
@@ -196,7 +197,12 @@ export default function FlightSearch() {
                                     : "opacity-0"
                                 )}
                               />
-                              {airport.label}
+                              <div className="flex flex-col">
+                                <span>{airport.label.split(" (")[0]}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {airport.value}
+                                </span>
+                              </div>
                             </CommandItem>
                           ))}
                         </CommandGroup>

@@ -475,7 +475,7 @@ export default function FlightResults() {
           <div className="space-y-2">
             {Array.from(
               new Set(flights.map((f) => f.departure.arrivalAirport.city))
-            ).map((city) => (
+            ).sort().map((city) => (
               <div key={city} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -503,7 +503,7 @@ export default function FlightResults() {
         <CardContent className="p-6">
           <h2 className="font-semibold mb-4">Airlines</h2>
           <div className="space-y-2">
-            {Array.from(new Set(flights.map((f) => f.departure.airline))).map(
+            {Array.from(new Set(flights.map((f) => f.departure.airline))).sort().map(
               (airline) => (
                 <div key={airline} className="flex items-center space-x-2">
                   <input
@@ -659,15 +659,8 @@ export default function FlightResults() {
                                     </div>
                                     <div className="flex-1 flex flex-col items-center">
                                       <div className="text-sm text-muted-foreground mb-2">
-                                        {flight.departure.airline}{" "}
-                                        {flight.departure.flightNumber}
-                                      </div>
-                                      <div className="w-full flex items-center">
-                                        <div className="h-[2px] flex-1 bg-border" />
-                                        <Plane className="h-4 w-4 mx-2 rotate-90" />
-                                        <div className="h-[2px] flex-1 bg-border" />
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">
+                                        {flight.departure.airline}
+                                        {" - "}
                                         {(() => {
                                           const departureTime = new Date(
                                             flight.departure.departureGMTTime
@@ -688,6 +681,11 @@ export default function FlightResults() {
                                           );
                                           return `${diffHours}h ${diffMinutes}m`;
                                         })()}
+                                      </div>
+                                      <div className="w-full flex items-center">
+                                        <div className="h-[2px] flex-1 bg-border" />
+                                        <Plane className="h-4 w-4 mx-2 rotate-90" />
+                                        <div className="h-[2px] flex-1 bg-border" />
                                       </div>
                                     </div>
                                     <div className="grid text-center">
@@ -744,21 +742,14 @@ export default function FlightResults() {
                                     </div>
                                     <div className="flex-1 flex flex-col items-center">
                                       <div className="text-sm text-muted-foreground mb-2">
-                                        {flight.return.airline}{" "}
-                                        {flight.return.flightNumber}
-                                      </div>
-                                      <div className="w-full flex items-center">
-                                        <div className="h-[2px] flex-1 bg-border" />
-                                        <Plane className="h-4 w-4 mx-2 -rotate-90" />
-                                        <div className="h-[2px] flex-1 bg-border" />
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">
+                                        {flight.departure.airline}
+                                        {" - "}
                                         {(() => {
                                           const departureTime = new Date(
-                                            flight.return.departureGMTTime
+                                            flight.departure.departureGMTTime
                                           );
                                           const arrivalTime = new Date(
-                                            flight.return.arrivalGMTTime
+                                            flight.departure.arrivalGMTTime
                                           );
                                           const diffHours = Math.floor(
                                             (arrivalTime.getTime() -
@@ -773,6 +764,11 @@ export default function FlightResults() {
                                           );
                                           return `${diffHours}h ${diffMinutes}m`;
                                         })()}
+                                      </div>
+                                      <div className="w-full flex items-center">
+                                        <div className="h-[2px] flex-1 bg-border" />
+                                        <Plane className="h-4 w-4 mx-2 -rotate-90" />
+                                        <div className="h-[2px] flex-1 bg-border" />
                                       </div>
                                     </div>
                                     <div className="grid text-center">
