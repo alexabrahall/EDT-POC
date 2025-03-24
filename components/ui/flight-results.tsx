@@ -347,6 +347,8 @@ export default function FlightResults() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [flights, setFlights] = useState<ApiResponse["routes"]>([]);
   const [loading, setLoading] = useState(true);
+  const [departureAiport, setDepartureAiport] = useState<string | null>(null);
+  const [date, setDate] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -366,6 +368,18 @@ export default function FlightResults() {
     };
 
     fetchFlights();
+
+    const params = new URLSearchParams(window.location.search);
+    const departure =
+      airports
+        .find((a) => a.value === params.get("departure"))
+        ?.label?.split(" (")[0] || "Loading...";
+    const date = params.get("date")
+      ? format(new Date(params.get("date")!), "EEE dd MMM")
+      : "";
+
+    setDepartureAiport(departure);
+    setDate(date);
   }, []);
 
   // Filter and sort flights
@@ -444,24 +458,11 @@ export default function FlightResults() {
       <main className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between my-2">
           <div className="flex items-center space-x-4">
-            {/* <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               {(() => {
-                const params = new URLSearchParams(window.location.search);
-                const departure =
-                  airports
-                    .find((a) => a.value === params.get("departure"))
-                    ?.label?.split(" (")[0] || "Loading...";
-                const date = params.get("date")
-                  ? format(new Date(params.get("date")!), "EEE dd MMM")
-                  : "";
-                const adults = params.get("adults") || "1";
-                const children = params.get("children") || "0";
-                const totalPassengers = parseInt(adults) + parseInt(children);
-                return `${departure} • ${date} • ${totalPassengers} ${
-                  totalPassengers === 1 ? "Adult" : "Adults"
-                }${children !== "0" ? ` (${children} Children)` : ""}`;
+                return `From ${departureAiport} • ${date} `;
               })()}
-            </div> */}
+            </div>
           </div>
           <Button
             variant="outline"
@@ -514,7 +515,10 @@ export default function FlightResults() {
                   <CardContent className="p-6">
                     <div className="flex flex-col space-y-4">
                       <div className="flex items-center justify-between">
-                        <div className="font-semibold">Day Trip</div>
+                        <div className="font-semibold">
+                          Day Trip - {flight.departure.departureAirport.city}{" "}
+                          -&gt; {flight.departure.arrivalAirport.city}
+                        </div>
                       </div>
 
                       {/* Outbound Flight */}
@@ -528,9 +532,7 @@ export default function FlightResults() {
                               minute: "2-digit",
                             })}
                           </span>
-                          <span className="text-sm text-muted-foreground">
-                            {flight.departure.departureAirport.city}
-                          </span>
+
                           <span className="text-xs text-muted-foreground">
                             {flight.departure.departureAirport.code}
                           </span>
@@ -545,6 +547,28 @@ export default function FlightResults() {
                             <Plane className="h-4 w-4 mx-2 rotate-90" />
                             <div className="h-[2px] flex-1 bg-border" />
                           </div>
+                          <div className="text-xs text-muted-foreground">
+                            {(() => {
+                              const departureTime = new Date(
+                                flight.departure.departureGMTTime
+                              );
+                              const arrivalTime = new Date(
+                                flight.departure.arrivalGMTTime
+                              );
+                              const diffHours = Math.floor(
+                                (arrivalTime.getTime() -
+                                  departureTime.getTime()) /
+                                  (1000 * 60 * 60)
+                              );
+                              const diffMinutes = Math.floor(
+                                ((arrivalTime.getTime() -
+                                  departureTime.getTime()) %
+                                  (1000 * 60 * 60)) /
+                                  (1000 * 60)
+                              );
+                              return `${diffHours}h ${diffMinutes}m`;
+                            })()}
+                          </div>
                         </div>
                         <div className="grid text-center">
                           <span className="font-semibold">
@@ -555,9 +579,7 @@ export default function FlightResults() {
                               minute: "2-digit",
                             })}
                           </span>
-                          <span className="text-sm text-muted-foreground">
-                            {flight.departure.arrivalAirport.city}
-                          </span>
+
                           <span className="text-xs text-muted-foreground">
                             {flight.departure.arrivalAirport.code}
                           </span>
@@ -595,9 +617,7 @@ export default function FlightResults() {
                               minute: "2-digit",
                             })}
                           </span>
-                          <span className="text-sm text-muted-foreground">
-                            {flight.return.departureAirport.city}
-                          </span>
+
                           <span className="text-xs text-muted-foreground">
                             {flight.return.departureAirport.code}
                           </span>
@@ -611,6 +631,28 @@ export default function FlightResults() {
                             <Plane className="h-4 w-4 mx-2 -rotate-90" />
                             <div className="h-[2px] flex-1 bg-border" />
                           </div>
+                          <div className="text-xs text-muted-foreground">
+                            {(() => {
+                              const departureTime = new Date(
+                                flight.return.departureGMTTime
+                              );
+                              const arrivalTime = new Date(
+                                flight.return.arrivalGMTTime
+                              );
+                              const diffHours = Math.floor(
+                                (arrivalTime.getTime() -
+                                  departureTime.getTime()) /
+                                  (1000 * 60 * 60)
+                              );
+                              const diffMinutes = Math.floor(
+                                ((arrivalTime.getTime() -
+                                  departureTime.getTime()) %
+                                  (1000 * 60 * 60)) /
+                                  (1000 * 60)
+                              );
+                              return `${diffHours}h ${diffMinutes}m`;
+                            })()}
+                          </div>
                         </div>
                         <div className="grid text-center">
                           <span className="font-semibold">
@@ -621,16 +663,14 @@ export default function FlightResults() {
                               minute: "2-digit",
                             })}
                           </span>
-                          <span className="text-sm text-muted-foreground">
-                            {flight.return.arrivalAirport.city}
-                          </span>
+
                           <span className="text-xs text-muted-foreground">
                             {flight.return.arrivalAirport.code}
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex sm:flex-row flex-col sm:justify-between items-center mt-4">
+                      <div className="flex sm:flex-row  justify-between items-center mt-4">
                         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
                           <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">

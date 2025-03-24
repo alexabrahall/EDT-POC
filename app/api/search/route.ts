@@ -48,11 +48,11 @@ async function getAirport(iata: string) {
 
   console.log(`Getting Airport: ${iata}`);
   let resp = await axios.get(
-    `https://iata-airports.p.rapidapi.com/airports/${iata}/`,
+    `https://airports15.p.rapidapi.com/airports/iata/${iata}`,
     {
       headers: {
         "x-rapidapi-key": "81ed9cb398msh399a5fccc6b1cebp1320dejsn66e2049aceff",
-        "x-rapidapi-host": "iata-airports.p.rapidapi.com",
+        "x-rapidapi-host": "airports15.p.rapidapi.com",
       },
     }
   );
@@ -61,11 +61,11 @@ async function getAirport(iata: string) {
 
   let newAirport = await prisma.airport.create({
     data: {
-      code: airportData.code,
+      code: airportData.iata_code,
       name: airportData.name,
       city: airportData.city || "",
-      country: airportData.country || "",
-      timezone: airportData.time_zone || "",
+      country: airportData.country_code || "",
+      timezone: airportData.timezone || "",
     },
   });
 
@@ -182,20 +182,16 @@ export type Root = {
 };
 
 export type AirportResponse = {
-  code: string;
-  icao: string;
   name: string;
-  latitude: number;
-  longitude: number;
-  elevation: number;
-  url: string;
-  time_zone: string;
-  city_code: string;
-  country: string;
+  iata_code: string;
+  icao_code: string;
+  country_code: string;
   city: string;
-  state: string;
-  county: string;
-  type: string;
+  elevation: number;
+  timezone: string;
+  local_time: string;
+  lat: number;
+  lon: number;
 };
 
 type Flight = {
@@ -351,6 +347,224 @@ export async function GET(request: Request) {
 
     params.data.date = new Date(params.data.date).toISOString().split("T")[0];
 
+    if (params.data.isMonthSelection) {
+      //calculate all the dates in the month / left in the month if its the current month
+      const startOfMonth = new Date(params.data.date);
+      startOfMonth.setDate(1);
+      const endOfMonth = new Date(params.data.date);
+      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+      endOfMonth.setDate(0);
+
+      const dates = [];
+      for (
+        let date = startOfMonth;
+        date <= endOfMonth;
+        date.setDate(date.getDate() + 1)
+      ) {
+        dates.push(new Date(date));
+      }
+
+      // Get all existing flights for the month
+      const existingFlights = await prisma.flight.findMany({
+        where: {
+          date: {
+            gte: startOfMonth,
+            lte: endOfMonth,
+          },
+          OR: [
+            {
+              departureAirport: {
+                code: params.data.departure,
+              },
+            },
+            {
+              arrivalAirport: {
+                code: params.data.departure,
+              },
+            },
+          ],
+        },
+        include: {
+          departureAirport: true,
+          arrivalAirport: true,
+        },
+      });
+
+      // Group existing flights by date
+      const flightsByDate = new Map();
+      existingFlights.forEach((flight) => {
+        const dateKey = flight.date.toISOString().split("T")[0];
+        if (!flightsByDate.has(dateKey)) {
+          flightsByDate.set(dateKey, []);
+        }
+        flightsByDate.get(dateKey).push(flight);
+      });
+
+      // Process each date in the month
+      const allDayTrips = [];
+      for (const date of dates) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const dateKey = date.toISOString().split("T")[0];
+        const dateKeyNextDay = new Date(date);
+        dateKeyNextDay.setDate(dateKeyNextDay.getDate() + 1);
+        const dateKeyNextDayStr = dateKeyNextDay.toISOString().split("T")[0];
+        const existingFlightsForDate = flightsByDate.get(dateKey) || [];
+
+        // If we have enough flights for this date, process them
+        if (existingFlightsForDate.length > 0) {
+          const outboundFlights = existingFlightsForDate.filter(
+            (flight) => flight.departureAirport.code === params.data.departure
+          );
+          const inboundFlights = existingFlightsForDate.filter(
+            (flight) => flight.arrivalAirport.code === params.data.departure
+          );
+
+          const dayTripsForDate = findDayTripsFromDb(
+            outboundFlights,
+            inboundFlights
+          );
+          allDayTrips.push(...dayTripsForDate);
+          continue; // Skip API call for this date
+        }
+
+        // If no flights exist for this date, fetch from API
+        const [outboundFlight, inboundFlight] = await Promise.all([
+          makeRequest(`${dateKey}T05:50`, `${dateKey}T17:30`),
+          makeRequest(`${dateKey}T13:00`, `${dateKeyNextDayStr}T01:00`),
+        ]);
+
+        // Transform and process new flights
+        const outboundFlights = await Promise.all(
+          outboundFlight.departures.map(async (flight) => {
+            const [departureAirport, arrivalAirport] = await Promise.all([
+              getAirport(params.data.departure),
+              getAirport(flight.arrival.airport.iata),
+            ]);
+
+            if (!departureAirport || !arrivalAirport) {
+              return null;
+            }
+
+            const flightData: FlightData = {
+              date: dateKey,
+              departureAirport: {
+                name: departureAirport.name,
+                code: departureAirport.code,
+                city: departureAirport.city,
+                country: departureAirport.country,
+                timezone: departureAirport.timezone,
+              },
+              departureLocalTime: flight.departure.scheduledTime?.local || "",
+              departureGMTTime: flight.departure.scheduledTime?.utc || "",
+              arrivalAirport: {
+                name: arrivalAirport.name,
+                code: arrivalAirport.code,
+                city: arrivalAirport.city,
+                country: arrivalAirport.country,
+                timezone: arrivalAirport.timezone,
+              },
+              arrivalLocalTime: flight.arrival.scheduledTime?.local || "",
+              arrivalGMTTime: flight.arrival.scheduledTime?.utc || "",
+              airline: flight.airline.name,
+              flightNumber: flight.number,
+              slug: `${params.data.departure}-${flight.number}-${dateKey}`,
+            };
+
+            // Send to microservice
+            try {
+              const microserviceUrl =
+                process.env.ENVIRONMENT === "development"
+                  ? "http://localhost:3001"
+                  : "https://api.evntcentral.com";
+              axios.post(`${microserviceUrl}/daytrippr/flights`, flightData);
+            } catch (error) {
+              console.error(
+                "Error sending flight data to microservice:",
+                error
+              );
+            }
+
+            return transformToFlightDb(
+              flight,
+              departureAirport,
+              arrivalAirport,
+              dateKey
+            );
+          })
+        );
+
+        const inboundFlights = await Promise.all(
+          inboundFlight.arrivals.map(async (flight) => {
+            const [departureAirport, arrivalAirport] = await Promise.all([
+              getAirport(flight.departure.airport?.iata || ""),
+              getAirport(params.data.departure),
+            ]);
+
+            if (!departureAirport || !arrivalAirport) {
+              return null;
+            }
+
+            const flightData: FlightData = {
+              date: dateKey,
+              departureAirport: {
+                name: departureAirport.name,
+                code: departureAirport.code,
+                city: departureAirport.city,
+                country: departureAirport.country,
+                timezone: departureAirport.timezone,
+              },
+              departureLocalTime: flight.departure.scheduledTime?.local || "",
+              departureGMTTime: flight.departure.scheduledTime?.utc || "",
+              arrivalAirport: {
+                name: arrivalAirport.name,
+                code: arrivalAirport.code,
+                city: arrivalAirport.city,
+                country: arrivalAirport.country,
+                timezone: arrivalAirport.timezone,
+              },
+              arrivalLocalTime: flight.arrival.scheduledTime?.local || "",
+              arrivalGMTTime: flight.arrival.scheduledTime?.utc || "",
+              airline: flight.airline.name,
+              flightNumber: flight.number,
+              slug: `${params.data.departure}-${flight.number}-${dateKey}`,
+            };
+
+            // Send to microservice
+            try {
+              const microserviceUrl =
+                process.env.ENVIRONMENT === "development"
+                  ? "http://localhost:3001"
+                  : "https://api.evntcentral.com";
+              axios.post(`${microserviceUrl}/daytrippr/flights`, flightData);
+            } catch (error) {
+              console.error(
+                "Error sending flight data to microservice:",
+                error
+              );
+            }
+
+            return transformToFlightDb(
+              flight,
+              departureAirport,
+              arrivalAirport,
+              dateKey
+            );
+          })
+        );
+
+        const dayTripsForDate = findDayTripsFromDb(
+          outboundFlights.filter((flight) => flight !== null),
+          inboundFlights.filter((flight) => flight !== null)
+        );
+        allDayTrips.push(...dayTripsForDate);
+      }
+
+      return Response.json({
+        success: true,
+        routes: allDayTrips,
+      });
+    }
+
     // Check for existing flights in the database
     const startOfDay = new Date(params.data.date);
     const endOfDay = new Date(params.data.date);
@@ -412,8 +626,8 @@ export async function GET(request: Request) {
 
     // Make API calls in parallel
     const [outboundFlight, inboundFlight] = await Promise.all([
-      makeRequest(`${params.data.date}T06:00`, `${params.data.date}T18:00`),
-      makeRequest(`${params.data.date}T18:00`, `${nextDayStr}T02:00`),
+      makeRequest(`${params.data.date}T05:50`, `${params.data.date}T17:30`),
+      makeRequest(`${params.data.date}T13:00`, `${nextDayStr}T01:00`),
     ]);
 
     // Transform outbound flights
@@ -566,11 +780,11 @@ export async function GET(request: Request) {
       message: "Valid parameters received",
     });
   } catch (error) {
-    // console.error("Error in search route:", error.stack);
+    console.error("Error in search route:", error.stack);
 
-    // if (axios.isAxiosError(error)) {
-    //   console.log(error.response);
-    // }
+    if (axios.isAxiosError(error)) {
+      console.log(error.response);
+    }
     return Response.json({
       success: false,
       error: "Internal server error",
