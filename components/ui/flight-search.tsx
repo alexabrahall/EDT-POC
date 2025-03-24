@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -75,7 +75,7 @@ export default function FlightSearch() {
   const [isMonthSelection, setIsMonthSelection] = useState(false);
   const [weekendOnly, setWeekendOnly] = useState(false);
   const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(1);
+  const [children, setChildren] = useState(0);
   const [month, setMonth] = useState<Date>(new Date());
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
@@ -96,6 +96,10 @@ export default function FlightSearch() {
     { value: "three", label: "3", numeric: 3 },
     { value: "four", label: "4", numeric: 4 },
   ];
+
+  useEffect(() => {
+    setWeekendOnly(isMonthSelection);
+  }, [isMonthSelection]);
 
   // Find the current option based on children value
   const currentOption =
@@ -278,7 +282,7 @@ export default function FlightSearch() {
                               const firstDay = new Date(
                                 newMonth.getFullYear(),
                                 newMonth.getMonth(),
-                                1
+                                15
                               );
                               setDate(firstDay);
                               setMonth(newMonth);
@@ -292,6 +296,7 @@ export default function FlightSearch() {
                                 <Checkbox
                                   id="weekend-only"
                                   checked={weekendOnly}
+                                  disabled
                                   onCheckedChange={(checked) => {
                                     setWeekendOnly(checked === true);
                                   }}

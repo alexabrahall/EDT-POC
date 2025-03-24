@@ -343,12 +343,15 @@ export type ApiResponse = {
 export default function FlightResults() {
   const [maxPrice, setMaxPrice] = useState(200);
   const [directOnly, setDirectOnly] = useState(false);
-  const [sortBy, setSortBy] = useState("departure");
+  const [sortBy, setSortBy] = useState("timeindestination");
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [flights, setFlights] = useState<ApiResponse["routes"]>([]);
   const [loading, setLoading] = useState(true);
   const [departureAiport, setDepartureAiport] = useState<string | null>(null);
   const [date, setDate] = useState<string | null>(null);
+  const [selectedDestinations, setSelectedDestinations] = useState<string[]>(
+    []
+  );
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -364,6 +367,15 @@ export default function FlightResults() {
       const response = await fetch("/api/search?" + queryString);
       const data = await response.json();
       setFlights(data.routes);
+      // Initialize selected destinations with all available destinations
+      const destinations = Array.from(
+        new Set(
+          data.routes.map(
+            (f: ApiResponse["routes"][0]) => f.departure.arrivalAirport.city
+          )
+        )
+      ) as string[];
+      setSelectedDestinations(destinations);
       setLoading(false);
     };
 
@@ -383,14 +395,34 @@ export default function FlightResults() {
   }, []);
 
   // Filter and sort flights
-  const filteredFlights = flights.sort((a, b) => {
-    if (sortBy === "departure")
-      return (
-        new Date(a.departure.departureGMTTime).getTime() -
-        new Date(b.departure.departureGMTTime).getTime()
-      );
-    return 0;
-  });
+  const filteredFlights = flights
+    .filter((flight) => {
+      // Filter by destination
+      if (
+        selectedDestinations.length > 0 &&
+        !selectedDestinations.includes(flight.departure.arrivalAirport.city)
+      ) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "departure")
+        return (
+          new Date(a.departure.departureGMTTime).getTime() -
+          new Date(b.departure.departureGMTTime).getTime()
+        );
+      if (sortBy === "timeindestination") {
+        const timeA =
+          new Date(a.return.departureGMTTime).getTime() -
+          new Date(a.departure.arrivalGMTTime).getTime();
+        const timeB =
+          new Date(b.return.departureGMTTime).getTime() -
+          new Date(b.departure.arrivalGMTTime).getTime();
+        return timeB - timeA; // Sort in descending order (longest stays first)
+      }
+      return 0;
+    });
 
   const FiltersContent = () => (
     <>
@@ -421,9 +453,42 @@ export default function FlightResults() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="departure">Departure Time</SelectItem>
+                  <SelectItem value="timeindestination">
+                    Time in destination
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <h2 className="font-semibold mb-4">Destinations</h2>
+          <div className="space-y-2">
+            {Array.from(
+              new Set(flights.map((f) => f.departure.arrivalAirport.city))
+            ).map((city) => (
+              <div key={city} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`dest-${city}`}
+                  className="rounded border-gray-300"
+                  checked={selectedDestinations.includes(city)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedDestinations([...selectedDestinations, city]);
+                    } else {
+                      setSelectedDestinations(
+                        selectedDestinations.filter((d) => d !== city)
+                      );
+                    }
+                  }}
+                />
+                <Label htmlFor={`dest-${city}`}>{city}</Label>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
