@@ -165,8 +165,8 @@ export default function FlightSearch() {
                     >
                       {departure
                         ? airports.find(
-                            (airport) => airport.value === departure
-                          )?.label
+                          (airport) => airport.value === departure
+                        )?.label
                         : "Departure Airport..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -230,11 +230,11 @@ export default function FlightSearch() {
                         <CalendarIcon className="h-4 w-4" />
                         {date
                           ? (isMonthSelection
-                              ? format(date, "MMMM yyyy")
-                              : format(date, "PPP")) +
-                            (weekendOnly && isMonthSelection
-                              ? " (Weekend Only)"
-                              : "")
+                            ? format(date, "MMMM yyyy")
+                            : format(date, "PPP")) +
+                          (weekendOnly && isMonthSelection
+                            ? " (Weekend Only)"
+                            : "")
                           : "Pick a date"}
                       </div>
                       <ChevronsUpDown className="h-4 w-4 opacity-50" />
@@ -255,7 +255,7 @@ export default function FlightSearch() {
                             className={cn(
                               "text-xs",
                               !isMonthSelection &&
-                                "bg-primary text-primary-foreground"
+                              "bg-primary text-primary-foreground"
                             )}
                             onClick={() => setIsMonthSelection(false)}
                             type="button"
@@ -268,7 +268,7 @@ export default function FlightSearch() {
                             className={cn(
                               "text-xs",
                               isMonthSelection &&
-                                "bg-primary text-primary-foreground"
+                              "bg-primary text-primary-foreground"
                             )}
                             onClick={() => setIsMonthSelection(true)}
                             type="button"
@@ -323,6 +323,10 @@ export default function FlightSearch() {
                         mode="single"
                         selected={date}
                         onSelect={(newDate) => {
+                          if (newDate) {
+                            // Set the time to midday (12:00)
+                            newDate.setHours(12, 0, 0, 0);
+                          }
                           setDate(newDate);
                           // setDatePopoverOpen(false);
                         }}
