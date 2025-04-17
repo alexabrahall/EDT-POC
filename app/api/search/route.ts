@@ -319,12 +319,12 @@ function findDayTripsFromDb(
   const trips: { departure: FlightDb; return: FlightDb }[] = [];
 
   goingFlights.forEach((dep) => {
-    const depTime = dep.departureGMTTime;
-    const arrTime = dep.arrivalGMTTime;
+    const depTime = moment.utc(dep.departureGMTTime).toDate();
+    const arrTime = moment.utc(dep.arrivalGMTTime).toDate();
 
     const sameDayReturns = returningFlights.filter((ret) => {
-      const retDepTime = ret.departureGMTTime;
-      const retArrTime = ret.arrivalGMTTime;
+      const retDepTime = moment.utc(ret.departureGMTTime).toDate();
+      const retArrTime = moment.utc(ret.arrivalGMTTime).toDate();
 
       return (
         ret.airportId === dep.arrivalAirportId &&
@@ -334,9 +334,27 @@ function findDayTripsFromDb(
       );
     });
 
-    sameDayReturns.forEach((ret) =>
-      trips.push({ departure: dep, return: ret })
-    );
+    sameDayReturns.forEach((ret) => {
+      const retDepTime = moment.utc(ret.departureGMTTime).toDate();
+      const retArrTime = moment.utc(ret.arrivalGMTTime).toDate();
+
+      const depTime = moment.utc(dep.departureGMTTime).toDate();
+      const arrTime = moment.utc(dep.arrivalGMTTime).toDate();
+
+      dep.departureLocalTime = depTime;
+      dep.arrivalLocalTime = arrTime;
+
+      ret.departureLocalTime = retDepTime;
+      ret.arrivalLocalTime = retArrTime;
+
+      dep.departureGMTTime = depTime;
+      dep.arrivalGMTTime = arrTime;
+
+      ret.departureGMTTime = retDepTime;
+      ret.arrivalGMTTime = retArrTime;
+
+      trips.push({ departure: dep, return: ret });
+    });
   });
 
   return trips;
@@ -787,7 +805,10 @@ export async function GET(request: Request) {
             timezone: departureAirport.timezone,
           },
           departureLocalTime: flight.departure.scheduledTime?.local || "",
-          departureGMTTime: flight.departure.scheduledTime?.utc || "",
+          departureGMTTime: moment
+            .utc(flight.departure.scheduledTime?.utc || "")
+            .toDate()
+            .toISOString(),
           arrivalAirport: {
             name: arrivalAirport.name,
             code: arrivalAirport.code,
@@ -796,7 +817,10 @@ export async function GET(request: Request) {
             timezone: arrivalAirport.timezone,
           },
           arrivalLocalTime: flight.arrival.scheduledTime?.local || "",
-          arrivalGMTTime: flight.arrival.scheduledTime?.utc || "",
+          arrivalGMTTime: moment
+            .utc(flight.arrival.scheduledTime?.utc || "")
+            .toDate()
+            .toISOString(),
           airline: flight.airline.name,
           flightNumber: flight.number,
           slug: `${params.data.departure}-${flight.number}-${params.data.date}`,
