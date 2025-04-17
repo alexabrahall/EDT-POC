@@ -36,7 +36,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { formatDate } from "../utils/utils";
 import { Flight } from "@prisma/client";
 import { format } from "date-fns";
-
+import { DateTime } from "luxon";
 // Sample airports data
 const airports = [
   { value: "LHR", label: "London Heathrow (LHR)", country: "United Kingdom" },
@@ -94,6 +94,7 @@ export type ApiResponse = {
         country: string;
         createdAt: string;
         updatedAt: string;
+        timezone: string;
       };
       arrivalAirport: {
         id: string;
@@ -103,6 +104,7 @@ export type ApiResponse = {
         country: string;
         createdAt: string;
         updatedAt: string;
+        timezone: string;
       };
     };
     return: {
@@ -127,6 +129,7 @@ export type ApiResponse = {
         country: string;
         createdAt: string;
         updatedAt: string;
+        timezone: string;
       };
       arrivalAirport: {
         id: string;
@@ -136,6 +139,7 @@ export type ApiResponse = {
         country: string;
         createdAt: string;
         updatedAt: string;
+        timezone: string;
       };
     };
   }>;
@@ -475,26 +479,31 @@ export default function FlightResults() {
           <div className="space-y-2">
             {Array.from(
               new Set(flights.map((f) => f.departure.arrivalAirport.city))
-            ).sort().map((city) => (
-              <div key={city} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id={`dest-${city}`}
-                  className="rounded border-gray-300"
-                  checked={selectedDestinations.includes(city)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedDestinations([...selectedDestinations, city]);
-                    } else {
-                      setSelectedDestinations(
-                        selectedDestinations.filter((d) => d !== city)
-                      );
-                    }
-                  }}
-                />
-                <Label htmlFor={`dest-${city}`}>{city}</Label>
-              </div>
-            ))}
+            )
+              .sort()
+              .map((city) => (
+                <div key={city} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`dest-${city}`}
+                    className="rounded border-gray-300"
+                    checked={selectedDestinations.includes(city)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedDestinations([
+                          ...selectedDestinations,
+                          city,
+                        ]);
+                      } else {
+                        setSelectedDestinations(
+                          selectedDestinations.filter((d) => d !== city)
+                        );
+                      }
+                    }}
+                  />
+                  <Label htmlFor={`dest-${city}`}>{city}</Label>
+                </div>
+              ))}
           </div>
         </CardContent>
       </Card>
@@ -503,8 +512,9 @@ export default function FlightResults() {
         <CardContent className="p-6">
           <h2 className="font-semibold mb-4">Airlines</h2>
           <div className="space-y-2">
-            {Array.from(new Set(flights.map((f) => f.departure.airline))).sort().map(
-              (airline) => (
+            {Array.from(new Set(flights.map((f) => f.departure.airline)))
+              .sort()
+              .map((airline) => (
                 <div key={airline} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -514,8 +524,7 @@ export default function FlightResults() {
                   />
                   <Label htmlFor={airline}>{airline}</Label>
                 </div>
-              )
-            )}
+              ))}
           </div>
         </CardContent>
       </Card>
@@ -645,12 +654,15 @@ export default function FlightResults() {
                                   <div className="flex items-center space-x-4">
                                     <div className="grid text-center">
                                       <span className="font-semibold">
-                                        {new Date(
-                                          flight.departure.departureLocalTime
-                                        ).toLocaleTimeString([], {
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        })}
+                                        {DateTime.fromISO(
+                                          flight.departure.departureGMTTime,
+                                          { zone: "utc" }
+                                        )
+                                          .setZone(
+                                            flight.departure.departureAirport
+                                              .timezone
+                                          )
+                                          .toFormat("HH:mm")}
                                       </span>
 
                                       <span className="text-xs text-muted-foreground">
@@ -690,12 +702,15 @@ export default function FlightResults() {
                                     </div>
                                     <div className="grid text-center">
                                       <span className="font-semibold">
-                                        {new Date(
-                                          flight.departure.arrivalLocalTime
-                                        ).toLocaleTimeString([], {
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        })}
+                                        {DateTime.fromISO(
+                                          flight.departure.arrivalGMTTime,
+                                          { zone: "utc" }
+                                        )
+                                          .setZone(
+                                            flight.departure.arrivalAirport
+                                              .timezone
+                                          )
+                                          .toFormat("HH:mm")}
                                       </span>
 
                                       <span className="text-xs text-muted-foreground">
@@ -709,10 +724,10 @@ export default function FlightResults() {
                                     <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-xs text-muted-foreground">
                                       {(() => {
                                         const arrivalTime = new Date(
-                                          flight.departure.arrivalLocalTime
+                                          flight.departure.arrivalGMTTime
                                         );
                                         const departureTime = new Date(
-                                          flight.return.departureLocalTime
+                                          flight.return.departureGMTTime
                                         );
                                         const diffHours = Math.round(
                                           (departureTime.getTime() -
@@ -728,12 +743,15 @@ export default function FlightResults() {
                                   <div className="flex items-center space-x-4">
                                     <div className="grid text-center">
                                       <span className="font-semibold">
-                                        {new Date(
-                                          flight.return.departureLocalTime
-                                        ).toLocaleTimeString([], {
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        })}
+                                        {DateTime.fromISO(
+                                          flight.return.departureGMTTime,
+                                          { zone: "utc" }
+                                        )
+                                          .setZone(
+                                            flight.return.arrivalAirport
+                                              .timezone
+                                          )
+                                          .toFormat("HH:mm")}
                                       </span>
 
                                       <span className="text-xs text-muted-foreground">
@@ -773,12 +791,15 @@ export default function FlightResults() {
                                     </div>
                                     <div className="grid text-center">
                                       <span className="font-semibold">
-                                        {new Date(
-                                          flight.return.arrivalLocalTime
-                                        ).toLocaleTimeString([], {
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        })}
+                                        {DateTime.fromISO(
+                                          flight.return.arrivalGMTTime,
+                                          { zone: "utc" }
+                                        )
+                                          .setZone(
+                                            flight.return.arrivalAirport
+                                              .timezone
+                                          )
+                                          .toFormat("HH:mm")}
                                       </span>
 
                                       <span className="text-xs text-muted-foreground">

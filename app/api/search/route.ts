@@ -290,25 +290,19 @@ function transformToFlightDb(
   date: string
 ): FlightDb {
   // Helper function to parse dates that already include timezone offset
-  const parseDateWithOffset = (dateStr: string, tz: string) => {
-    if (!dateStr) return new Date();
+  // const parseDateWithOffset = (dateStr: string, tz: string) => {
+  //   if (!dateStr) return new Date();
 
-    return new Date(dateStr + "Z");
-  };
+  //   return new Date(dateStr + "Z");
+  // };
 
   return {
     id: Math.random().toString(36).substring(7), // Generate a random ID
     date: new Date(date),
-    departureLocalTime: parseDateWithOffset(
-      flight.departure.scheduledTime?.local || "",
-      departureAirport.timezone
-    ),
-    departureGMTTime: new Date(flight.departure.scheduledTime?.utc || ""),
-    arrivalLocalTime: parseDateWithOffset(
-      flight.arrival.scheduledTime?.local || "",
-      arrivalAirport.timezone
-    ),
-    arrivalGMTTime: new Date(flight.arrival.scheduledTime?.utc || ""),
+    departureLocalTime: new Date(flight.departure.scheduledTime?.local || ""),
+    departureGMTTime: moment.utc(flight.departure.scheduledTime?.utc).toDate(), // Explicitly parse as UTC
+    arrivalLocalTime: new Date(flight.arrival.scheduledTime?.local || ""),
+    arrivalGMTTime: moment.utc(flight.arrival.scheduledTime?.utc).toDate(), // Explicitly parse as UTC
     airline: flight.airline.name,
     flightNumber: flight.number,
     airportId: departureAirport.id,
@@ -335,7 +329,7 @@ function findDayTripsFromDb(
       return (
         ret.airportId === dep.arrivalAirportId &&
         ret.arrivalAirportId === dep.airportId &&
-        depTime.toDateString() === retDepTime.toDateString() &&
+        moment.utc(depTime).isSame(moment.utc(retDepTime), "day") && // Compare using UTC days
         (retDepTime.getTime() - arrTime.getTime()) / (1000 * 60 * 60) >= 6
       );
     });
@@ -357,6 +351,10 @@ const makeRequest = async (
   try {
     console.log(
       `Making request for airport ${airport} from ${startTime} to ${endTime}`
+    );
+
+    console.log(
+      `https://aerodatabox.p.rapidapi.com/flights/airports/iata/${airport}/${startTime}/${endTime}?withLeg=true&direction=Both&withCancelled=false&withCodeshared=false&withCargo=false&withPrivate=false&withLocation=false`
     );
     const response = await axios.get(
       `https://aerodatabox.p.rapidapi.com/flights/airports/iata/${airport}/${startTime}/${endTime}?withLeg=true&direction=Both&withCancelled=false&withCodeshared=false&withCargo=false&withPrivate=false&withLocation=false`,
